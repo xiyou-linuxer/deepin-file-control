@@ -114,15 +114,18 @@ void *read_file(void *p)
 
     int sum_data = 0;
     //这个要保证每次while循环读到一个buf
+
+    int file_sum = 0;
     while (1) {
         int t = 0;
         send_file buf;
         memset(&buf,0,sizeof(buf));
         while (t != sizeof(buf)) {
-            int n = recv(fd,(void *)&buf,sizeof(buf) - t,(int)0);
+            int n = recv(fd,((char *)&buf) + t,sizeof(buf) - t,(int)0);
+            cout << "收到一些文件" << ++file_sum << endl;
             if (n == 0) {
-                cout << "连接断开" << endl;
-                return NULL;
+                cout << "连接断开" << inet_ntoa(data->cli_addr) << endl;
+                pthread_exit(0);
             }
             if (n > 0) {
                 t += n;
@@ -132,13 +135,16 @@ void *read_file(void *p)
                 if (errno == EINTR)
                     continue;
                 cout << "recv err" << endl;
-                return NULL;
+                pthread_exit(0);
             }
         }
         //为了和open统一,close只能这么写
         if (buf.n == -777) {
             get_backup(fd,buf,file_path);
-            return NULL;
+            //emmmm 原来是这
+            //return NULL;
+
+            continue;
         }
 
         //后加的,为了文件截断
