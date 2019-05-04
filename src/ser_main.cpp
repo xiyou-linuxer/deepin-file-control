@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <map>
 
 using namespace std;
 
@@ -34,19 +35,31 @@ struct cli_data
     int fd;
 };
 
-void get_backup(int fd,send_file f,char *file_addr);
+void get_backup(int fd,send_file f,char *file_addr,map<string, int> &map_fd);
 
 ssize_t writen(int fd,const void *ptr,size_t n);
+void file_backup(send_file f,char *file_addr,map<string, int> &map_fd);
 
 void handle(int t)
 {
 }
-void file_backup(send_file f,char *file_addr,int *fd)
+void file_backup(send_file f,char *file_addr,map<string, int> &map_fd)
 {
-    cout << "f.c = " << f.c << endl;
+    //int *fd = &map_fd[f.pathname];
+    //int *fd = map_fd.find(f.pathname);
+    map<string, int>::iterator fd = map_fd.find(f.pathname);
+    if (fd == map_fd.end()) {
+        cout << "没有这个fd" << endl;
+        map_fd[f.pathname] = 0;
+        fd = map_fd.find(f.pathname);
+    }
+
+    cout << "f.n = " << f.n << endl;
     cout << "f.path = " << f.pathname << endl;
+    cout << "f.c = " << f.c << endl;
+
     //这样既把fd存起来了,又少了一次判断,一石二鸟
-    if (*fd == 0) {
+    if (fd->second == 0) {
         //首先建立多级目录! 如果建立过,就不用多次建立了!!!
         string t("../backupfile/");
         t += file_addr;
@@ -70,8 +83,9 @@ void file_backup(send_file f,char *file_addr,int *fd)
         }
 
         //then打开文件,并写入信息
-        *fd = open(t.c_str(),O_RDWR | O_CREAT,0666);
-        if (*fd < 0) {
+        fd->second = open(t.c_str(),O_RDWR | O_CREAT,0666);
+        cout << "fd->second = " << fd->second << endl;
+        if (fd->second < 0) {
             perror("open err:");
             pthread_exit(0);
         }
@@ -84,13 +98,41 @@ void file_backup(send_file f,char *file_addr,int *fd)
     }
     */
     //一直写,直到完成
-    write(*fd,f.c,f.n);
+    cout << "f.n = " << f.n << endl;
+    if (f.n != 0) {
+        int t = writen(fd->second,f.c,f.n);
+        if(t < 0)
+        {
+            perror("write err:");
+        }
+        fsync(fd->second);
+        cout << "t = " << t << endl;
+
+        struct stat ttt;
+        bzero(&ttt,sizeof(ttt));
+        fstat(fd->second,&ttt);
+        cout << "t.st_size" << ttt.st_size << endl;
+    }
+
+    //还好当时发了个空包
+
+    /*
+    cout << "`````````````" << "f.n = " << f.n << endl;
+    if(f.n == 0)
+    {
+        close(*fd);
+        *fd = 0;
+        return;
+    }
+    */
 }
 
 
+//这有大问题,得改
 void *read_file(void *p)
 {
-    int flag_file = 0;
+    map<string, int> map_fd;
+    //int flag_file = 0;
     //脱离主线程控制
     if (pthread_detach(pthread_self()) < 0) {
         perror("pthread_detach err:");
@@ -112,17 +154,16 @@ void *read_file(void *p)
     printf("%s\n", inet_ntoa(data->cli_addr));
 
 
-    int sum_data = 0;
+    //int sum_data = 0;
     //这个要保证每次while循环读到一个buf
 
     int file_sum = 0;
     while (1) {
         int t = 0;
         send_file buf;
-        memset(&buf,0,sizeof(buf));
+        bzero(&buf,sizeof(send_file));
         while (t != sizeof(buf)) {
             int n = recv(fd,((char *)&buf) + t,sizeof(buf) - t,(int)0);
-            cout << "收到一些文件" << ++file_sum << endl;
             if (n == 0) {
                 cout << "连接断开" << inet_ntoa(data->cli_addr) << endl;
                 pthread_exit(0);
@@ -140,7 +181,7 @@ void *read_file(void *p)
         }
         //为了和open统一,close只能这么写
         if (buf.n == -777) {
-            get_backup(fd,buf,file_path);
+            get_backup(fd,buf,file_path,map_fd);
             //emmmm 原来是这
             //return NULL;
 
@@ -148,12 +189,13 @@ void *read_file(void *p)
         }
 
         //后加的,为了文件截断
-        sum_data += buf.n;
-        if (buf.n == 0) {
-            if(flag_file)
-                ftruncate(flag_file,sum_data);
-        }
-        file_backup(buf,file_path,&flag_file);
+//        sum_data += buf.n;
+//        cout << "buf.n = " << buf.n << "   " << "sum_data = " << sum_data << endl;
+//        if (buf.n == 0) {
+//            if(map_fd[buf.pathname])
+//                ftruncate(map_fd[buf.pathname],sum_data);
+//        }
+        file_backup(buf,file_path,map_fd);
     }
 
 }
@@ -198,7 +240,6 @@ int main(int argc,char **argv)
         return -1;
     }
 
-
     //目前写的服务器这边,是每有一个连接,建立一个线程
     while(1)
     {
@@ -227,19 +268,22 @@ int main(int argc,char **argv)
     return 0;
 }
 
-void get_backup(int fd,send_file f,char *file_addr)
+void get_backup(int fd,send_file f,char *file_addr,map<string, int> &map_fd)
 {
     string t("../backupfile/");
     t += file_addr;
     t += f.pathname;
     cout << t << endl;
 
+
+    //int *fffd = &(*map_fd)[f.pathname];
+    map<string, int>::iterator fffd = map_fd.find(f.pathname);
+
     int fd_file = open(t.c_str(),O_RDWR,0666);
     if (fd_file < 0) {
         perror("open err:");
         pthread_exit(0);
     }
-
 
     cout << "这里说明已经要close文件了" << endl;
 
@@ -302,6 +346,12 @@ void get_backup(int fd,send_file f,char *file_addr)
             pthread_exit(0);
         }
     }
+
+    cout << "发送备份完成" << endl;
+    ftruncate(fffd->second,0);
+    lseek(fffd->second,SEEK_SET,0);
+    cout << "偏移量修改完成" << endl;
+    return;
 }
 
 ssize_t writen(int fd,const void *ptr,size_t n)
