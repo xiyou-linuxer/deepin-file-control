@@ -54,9 +54,7 @@ void file_backup(send_file f,char *file_addr,map<string, int> &map_fd)
         fd = map_fd.find(f.pathname);
     }
 
-    cout << "f.n = " << f.n << endl;
-    cout << "f.path = " << f.pathname << endl;
-    cout << "f.c = " << f.c << endl;
+    cout << "f.n = " << f.n << "  f.path = " << f.pathname << " f.c = " << f.c << endl;
 
     //这样既把fd存起来了,又少了一次判断,一石二鸟
     if (fd->second == 0) {
@@ -98,7 +96,6 @@ void file_backup(send_file f,char *file_addr,map<string, int> &map_fd)
     }
     */
     //一直写,直到完成
-    cout << "f.n = " << f.n << endl;
     if (f.n != 0) {
         int t = writen(fd->second,f.c,f.n);
         if(t < 0)

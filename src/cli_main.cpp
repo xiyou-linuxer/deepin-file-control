@@ -20,11 +20,9 @@
 #include <queue>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <map>
 
-#define FILE_PATH "../etc/file.conf"
+#define FILE_PATH "/home/ma/add_test/file.conf"
 //这个是客户端
 using namespace std;
 
@@ -55,6 +53,8 @@ int send_mes(int file_fd);
 //这个是client的msg标示符
 int msgid = 0;
 int serverfd = 0;
+int ser_open_or_close = 1;
+
 void get_msg_id();
 
 void get_hook_msg();
@@ -77,17 +77,28 @@ void msg_hook_snd(char *pathname,char *flags);
 void* get_mes(void *pathname);
 
 void* recv_cli(void *p);
+
+void handle(int t);
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+
+map<string, int> map_fd;
+
 int main()
 {
+    signal(SIGCHLD,handle);
     //获取原始的open和close函数
     get_old_add();
     //获取etc配置文件
     get_etc();
-    //建立和服务器的连接
-    serverfd = getsocket();
 
     //建立自己的segqueue
     get_msg_id();
+
+    //建立和服务器的连接
+    serverfd = getsocket();
+
     //现在就要开始收消息了...
     get_hook_msg();
 
@@ -109,53 +120,30 @@ void get_old_add()
     }
 }
 
+//这个函数就是得到消息队列的信息
 void get_hook_msg()
 {
     while (1) {
         msg_buf *b2 = new msg_buf;
         bzero(b2,sizeof(msg_buf));
-        /*这个是只有open时候的代码
-        int ret=msgrcv(msgid, b2, sizeof(b2->mtext),0,0);
-        if (ret==-1) {
-            printf("recv message err\n");
-            perror("dd");
-            return ;
-        }
-        cout << b2->mtext << endl;
-        */
-        int trans = 0;
+
         while (1) {
             sleep(1);
-            int ret = 0;
-            if (trans == 0) {
-                ret = msgrcv(msgid, b2, sizeof(b2->mtext),100,IPC_NOWAIT);
-                trans = 1;
-            } else {
-                ret = msgrcv(msgid, b2, sizeof(b2->mtext),200,IPC_NOWAIT);
-                trans = 0;
-            }
+            int ret = msgrcv(msgid, b2, sizeof(b2->mtext),0,0);
             if (ret==-1) {
                 perror("dd");
                 continue;
             }
             break;
         }
-        if (trans == 0) {
-            trans = 1;
-        }else {
-            trans = 0;
-        }
-
-
         cout << b2->mtext << endl;
+        cout << "b2->mtext[199] = " << b2->mtext[199] << endl;
         //trans == 0是100,否则是200,100是open,200是close
         //判断是否劫持
-        if (trans == 0)
+        if (b2->mtext[199] == 0)
             change_hook(b2->mtext);
-        if (trans == 1)
-        {
+        if (b2->mtext[199] == 1)
             change_hook_close(b2->mtext);
-        }
     }
 }
 
@@ -169,6 +157,11 @@ void get_msg_id()
         perror("msgget err:");
         exit(0);
     }
+
+    //
+    cout << "cli msgid = " << msgid << endl;
+
+    //循环清空之前的残留文件
     while(1)
     {
         msg_buf b2;
@@ -200,7 +193,6 @@ void get_msg_id()
     }
     cout << b2.mtext << endl;
     */
-    cout << msgid << endl;
 }
 
 int getsocket()
@@ -220,19 +212,35 @@ int getsocket()
     conn_addr.sin_port = htons(ports);
     conn_addr.sin_addr.s_addr = inet_addr(t1.c);
 
-    if(connect(fd,(struct sockaddr*)&conn_addr,sizeof(conn_addr)) < 0)
-    {
-        printf("连接服务器失败 即将退出\n");
-        sleep(2);
+    int pid = fork();
+    if (pid > 0) {
+        //总之就是这个fd,所以代码还是可以复用滴~
+        return fd;
+    } else if (pid == 0) {
+        while (connect(fd,(struct sockaddr*)&conn_addr,sizeof(conn_addr)) < 0) {
+            cout << "连接服务器失败 拒绝任何监控目录下的文件操作" << endl;
+            sleep(2);
+        }
+        exit(0);
+    } else {
+        perror("getsocket fork err:");
         exit(0);
     }
 
+    /*
+    //这种方案显然不行,我得fork一个
+    while (connect(fd,(struct sockaddr*)&conn_addr,sizeof(conn_addr)) < 0) {
+        cout << "连接服务器失败 拒绝任何监控目录下的文件操作" << endl;
+        ser_open_or_close = 1;
+        sleep(2);
+    }
+    ser_open_or_close = 0;
     pthread_t t;
     if (pthread_create(&t,NULL,recv_cli,NULL) < 0) {
         perror("ptread err:");
         exit(0);
     }
-
+*/
     return fd;
 }
 
@@ -314,10 +322,29 @@ void* get_mes(void *pathname)
 
     //这里我感觉有bug...
     msg_hook_snd((char *)pathname,"2");
+
+    map_fd[(char *)pathname] = 0;
 }
 
 void* send_mes(void *pathname)
 {
+    pthread_mutex_lock(&mutex);
+    map<string, int>::iterator fd111 = map_fd.find((char *)pathname);
+    if (fd111 == map_fd.end()) {
+        cout << "没有这个fd" << endl;
+        map_fd[(char *)pathname] = 1;
+        fd111 = map_fd.find((char *)pathname);
+    } else {
+        while (1) {
+            if (map_fd[(char *)pathname] == 0) {
+                map_fd[(char *)pathname] = 1;
+                break;
+            }
+            sleep(1);
+        }
+    }
+    pthread_mutex_unlock(&mutex);
+
     if (pthread_detach(pthread_self()) < 0) {
         perror("send_mes detach err:");
         return NULL;
@@ -396,6 +423,9 @@ void* send_mes(void *pathname)
     cout << "发送文件完成\n" << endl;
 
     msg_hook_snd((char *)pathname,"2");
+
+
+    //map_fd[(char *)pathname] = 0;
 }
 
 ssize_t writen(int fd,const void *ptr,size_t n)
@@ -425,11 +455,18 @@ void change_hook(char *pathname)
     cout << strncmp(c_etc.path,pathname,strlen(c_etc.path)) << endl;
     if (strncmp(c_etc.path,pathname,strlen(c_etc.path)) == 0) {
         cout << "需要劫持!\n" << endl;
+
+        //这里填写如果服务器关闭,则拒绝任何操作!!!
+        if (ser_open_or_close) {
+            msg_hook_snd(pathname,"0");
+            return;
+        }
+
+
         pthread_t t;
         if (pthread_create(&t,NULL,send_mes,(void *)pathname) < 0) {
             perror("change_hook pthread_create err:");
         }
-        //send_mes(pathname);
     } else {
         //这是不用劫持的情况
         cout << "111" << endl;
@@ -554,5 +591,18 @@ void* recv_cli(void *p)
             sum += t;
         }
         old_close(ffd);
+    }
+}
+
+void handle(int t)
+{
+    if (t == SIGCHLD) {
+        ser_open_or_close = 0;
+        pthread_t t;
+        if (pthread_create(&t,NULL,recv_cli,NULL) < 0) {
+            perror("ptread err:");
+            exit(0);
+        }
+        cout << "服务器连接成功!\n收线程建立成功" << endl;
     }
 }

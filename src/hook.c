@@ -17,7 +17,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
-#define FILE_PATH "../etc/file.conf"
+#define FILE_PATH "/home/ma/add_test/file.conf"
 typedef int (*OPEN)(const char *pathname, int flags,...);
 typedef int (*CLOSE)(int fd);
 static OPEN old_open = NULL;
@@ -40,6 +40,7 @@ int recv_mes(int file_fd);
 ssize_t writen(int fd,const void *ptr,size_t n);
 void get_msg_id();
 void send_queue_pathname(int *pflag,int mtype);
+
 int open(const char *pathname,int flags,...)
 {
     //首先建立消息队列
@@ -63,13 +64,11 @@ int open(const char *pathname,int flags,...)
     }
     //change_hook(pathname,&path_flag);
 
-    bzero(real_path,sizeof(real_path));
     if (pathname[0] != '/') {
         char *m = realpath(pathname,real_path);
-        printf("realpath = %s  %s\n",pathname,real_path);
         if(m == NULL)
         {
-            perror("get realpath err:\n");
+            printf("get realpath err:\n");
             exit(0);
         }
     }
@@ -255,14 +254,19 @@ void send_queue_pathname(int *pflag,int mtype)
     //type为100,是发送pathname
     msg_buf b1;
     bzero(&b1,sizeof(b1));
-    b1.mtype = mtype;
+    b1.mtype = 100;
     strcpy(b1.mtext,real_path);
 
-    char ccc[100];
+    char ccc[200];
     bzero(ccc,sizeof(ccc));
     sprintf(ccc,"%d",msgid);
     //发送格式   real_path + 0 + msgid
+    //b1.mtext 最后一位是发送的是open的还是close的,0是open,1是close
     strcpy(&b1.mtext[strlen(b1.mtext) + 1],ccc);
+
+    if (mtype == 200) {
+        b1.mtext[199] = 1;
+    }
     printf("%s\n",&b1.mtext[strlen(b1.mtext) + 1]);
     if (msgsnd(cli_msgid,(void *)&b1,sizeof(b1.mtext),0) < 0) {
         perror("msgsnd err:");
