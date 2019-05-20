@@ -40,7 +40,7 @@ int main(void)
     Poll poller;
 #endif
     EventLoop loop(&poller);
-    /* Channel *chl = new Channel(&loop);
+    Channel *chl = new Channel(&loop);
     chl->socket().setPort(8888);
     chl->socket().listen();
     logDebug("Server is listening port 8888");
@@ -49,8 +49,9 @@ int main(void)
     chl->setMessageCb(std::bind(&onMessage,
                 std::placeholders::_1,
                 std::placeholders::_2));
-    loop.addChannel(chl); */
-    loop.runEvery(300, std::bind(&printStr, "hello, world"));
-    loop.runAfter(2000, std::bind(&printStr, "1234523452345"));
+    loop.addChannel(chl);
+    // loop.runEvery(300, []{ std::cout << "hello" << std::endl; });
+    // loop.runEvery(300, std::bind(&printStr, "hello, world"));
+    // loop.runAfter(2000, std::bind(&printStr, "1234523452345"));
     loop.run();
 }
