@@ -1,5 +1,4 @@
 #include <unistd.h>
-#include <pthread.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <iostream>
@@ -7,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdarg>
+#include <chrono>
 #include "EventLoop.h"
 #include "Timer.h"
 #include "Logger.h"
@@ -14,72 +14,75 @@
 Logger *_log = nullptr;
 
 Logger::Logger()
+    : _thread([this]{ this->flushToFile(); }),
+    _quit(0)
 {
     if (_log)
         logError("repeat creat logger");
-    _quit = 0;
-    pthread_mutex_init(&_mutex, NULL);
-    pthread_cond_init(&_cond, NULL);
     mkdir(".log", 0777);
-    // 泄漏了this指针
-    pthread_create(&_tid, NULL, flushToFile, this);
+    // 为了方便测试查看，所以暂时只使用一个文件
+    _fd = open("./.log/x.log", O_WRONLY | O_APPEND | O_CREAT, 0777);
 }
 
 Logger::~Logger()
 {
     _quit = 1;
-    pthread_cond_signal(&_cond);
-    pthread_join(_tid, NULL);
-    pthread_mutex_destroy(&_mutex);
-    pthread_cond_destroy(&_cond);
+    _condVar.notify_one();
+    _thread.join();
+    close(_fd);
 }
 
 void Logger::writeToBuffer(const char *s, size_t len)
 {
-    pthread_mutex_lock(&_mutex);
+    std::lock_guard<std::mutex> mlock(_mutex);
     _writeBuf.append(s, len);
-    pthread_mutex_unlock(&_mutex);
 }
 
-void Logger::wakeUp(void)
-{
-    pthread_mutex_lock(&_mutex);
-    if (_writeBuf.readable() > 0) {
-        _writeBuf.swap(_flushBuf);
-        pthread_mutex_unlock(&_mutex);
-        pthread_cond_signal(&_cond);
-    } else
-        pthread_mutex_unlock(&_mutex);
-}
+// void Logger::wakeUp(void)
+// {
+    // std::lock_guard<std::mutex> mlock(_mutex);
+    // if (_writeBuf.readable() > 0) {
+        // _writeBuf.swap(_flushBuf);
+        // _condVar.notify_one();
+    // }
+// }
 
-void *Logger::flushToFile(void *arg)
+void Logger::flushToFile()
 {
-    Logger *_l = static_cast<Logger*>(arg);
-    // 为了方便测试查看，所以暂时只使用一个文件
-    int fd = open("./.log/x.log", O_WRONLY | O_APPEND | O_CREAT, 0777);
     while (1) {
-        pthread_mutex_lock(&_l->_mutex);
-        while (!_l->_quit && _l->_flushBuf.readable() == 0)
-            pthread_cond_wait(&_l->_cond, &_l->_mutex);
-        if (_l->_quit) {
-            write(fd, _l->_flushBuf.peek(), _l->_flushBuf.readable());
-            pthread_mutex_unlock(&_l->_mutex);
+        waitFor();
+        if (_flushBuf.readable() > 0)
+            writeToFile();
+    }
+}
+
+void Logger::waitFor()
+{
+    std::unique_lock<std::mutex> mlock(_mutex);
+    if (!_quit && _writeBuf.readable() == 0)
+        _condVar.wait_for(mlock, std::chrono::seconds(1));
+    if (_quit) {
+        write(_fd, _flushBuf.peek(), _flushBuf.readable());
+        exit(1);
+    }
+    if (_writeBuf.readable() > 0)
+        _writeBuf.swap(_flushBuf);
+}
+
+void Logger::writeToFile()
+{
+    // 将日志打印到屏幕上
+    // fprintf(stderr, "%s", _flushBuf.c_str());
+    // _flushBuf.retrieveAll();
+    while (1) {
+        ssize_t n = write(_fd, _flushBuf.peek(), _flushBuf.readable());
+        if (n < 0) {
+            fprintf(stderr, "flushToFile write error: %s", strerror(errno));
             exit(1);
         }
-        // 将日志打印到屏幕上
-        // fprintf(stderr, "%s", _l->_flushBuf.c_str());
-        // _l->_flushBuf.retrieveAll();
-        while (1) {
-            ssize_t n = write(fd, _l->_flushBuf.peek(), _l->_flushBuf.readable());
-            if (n < 0) {
-                fprintf(stderr, "flushToFile write error: %s", strerror(errno));
-                exit(1);
-            }
-            _l->_flushBuf.retrieve(n);
-            if (_l->_flushBuf.readable() == 0)
-                break;
-        }
-        pthread_mutex_unlock(&_l->_mutex);
+        _flushBuf.retrieve(n);
+        if (_flushBuf.readable() == 0)
+            break;
     }
 }
 

@@ -1,7 +1,9 @@
 #ifndef _LOGGER_H
 #define _LOGGER_H
 
-#include <pthread.h>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 #include "Buffer.h"
 #include "Noncopyable.h"
 
@@ -17,7 +19,7 @@ public:
         WARN    = 004,
         ERROR   = 010,
     };
-    void wakeUp();
+    // void wakeUp();
     void output(int level, const char *file, int line, 
             const char *func, const char *fmt, ...);
     const char *levelStr(int level);
@@ -25,16 +27,22 @@ public:
     { 
         _quit = 1; 
         _writeBuf.swap(_flushBuf);
-        pthread_cond_signal(&_cond);
+        _condVar.notify_one();
     }
 private:
     void writeToBuffer(const char *s, size_t len);
-    static void *flushToFile(void *arg);
+    void flushToFile();
+    void writeToFile();
+    void waitFor();
     Buffer _writeBuf;
     Buffer _flushBuf;
-    pthread_t _tid;
-    pthread_mutex_t _mutex;
-    pthread_cond_t _cond;
+    std::thread _thread;
+    std::mutex _mutex;
+    std::condition_variable _condVar;
+    // pthread_t _tid;
+    // pthread_mutex_t _mutex;
+    // pthread_cond_t _cond;
+    int _fd;
     int _quit; 
 };
 
