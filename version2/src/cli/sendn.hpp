@@ -20,6 +20,7 @@
 #include <sys/mman.h>
 #include <vector>
 
+
 using namespace std;
 
 
@@ -36,61 +37,6 @@ static map<string, int> map_once;
 
 typedef int(*OPEN)(const char*, int, ...);
 typedef int(*CLOSE)(int);
-
-int send_n(int fd,char *buffer,int n)
-{
-    int num = 0;
-    while ( num < n ) {
-        pthread_mutex_lock( &mutex );
-        int t = send( fd,&buffer[num],n - num,0 );
-        pthread_mutex_unlock( &mutex );
-        if ( t < 0 ) {
-            if( errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK ) {
-                cout << "send_n send err" << endl;
-                continue;
-            } else if ( t == 0 ) {
-                cout << "server close" << endl;
-                return -1;
-            } else {
-                num += t;
-            }
-        }
-    }
-    return 0;
-}
-
-void path_once_lock(char* pathname)
-{
-    pthread_mutex_lock(&mutex_map);
-    map<string, int>::iterator it = map_once.find((char *)pathname);
-    if (it == map_once.end()) {
-        cout << "没有这个map,需要创建" << endl;
-        map_once[pathname] = 1;
-        pthread_mutex_unlock(&mutex_map);
-    } else {
-        pthread_mutex_unlock(&mutex_map);
-        while (1) {
-            pthread_mutex_lock(&mutex_add);
-            if (map_once[pathname] == 0) {
-                map_once[pathname] = 1;
-                pthread_mutex_unlock(&mutex_add);
-                break;
-            }
-            usleep(500);
-            pthread_mutex_unlock(&mutex_add);
-        }
-    }
-}
-
-void path_once_unlock(char* pathname)
-{
-    map<string, int>::iterator it = map_once.find((char *)pathname);
-    if (it == map_once.end()) {
-        cout << "err pathname don't have this pathname" << endl;
-        return;
-    }
-    map_once[pathname] = 0;
-}
 
 
 //flag = 1是知道size,flag = 0是不知道size,是读取\r\n的
@@ -154,6 +100,8 @@ int recv_n(int fd,char *buffer,int flag,int _size)
     }
 }
 
+
+
 char* get_mac()
 {
     char *c = new char[200];
@@ -166,11 +114,6 @@ char* get_mac()
         perror( "socket ");
         return NULL;
     }
-
-
-    //这个网卡这得改!!!
-    //这个网卡这得改!!!
-    //这个网卡这得改!!!
     const char *etho = "wlp2s0";
     strcpy(ifreq.ifr_name,etho);
     if(ioctl(sock,SIOCGIFHWADDR,&ifreq) <0)
@@ -188,63 +131,6 @@ char* get_mac()
     return c;
 }
 
-void send_file(int fd,char *path)
-{
-    /*打开动态链接库*/
-    static void *handle = NULL;
-    static OPEN old_open = NULL;
-    static CLOSE old_close = NULL;
-    if(!handle)
-    {
-        handle = dlopen("libc.so.6", RTLD_LAZY);
-        old_open = (OPEN)dlsym(handle, "open");
-        dlclose(handle);
-    }
-    handle = NULL;
-    if(!handle)
-    {
-        handle = dlopen("libc.so.6", RTLD_LAZY);
-        old_close = (CLOSE)dlsym(handle, "close");
-        dlclose(handle);
-    }
-
-    int file_fd = old_open(path,O_RDWR);
-    if (file_fd < 0) {
-        perror("open file.conf err:");
-        exit(0);
-    }
-
-    char c[200];
-    bzero(c,sizeof(c));
-    sprintf(c,"SAVE %s %s\r\n",path,get_mac());
-    int r = send_n(fd,c,strlen(c));
-    if (r < 0) {
-        cout << "send_n err" << endl;
-    }
-
-    struct stat buf_stat;
-    bzero(&buf_stat,sizeof(buf_stat));
-    fstat(file_fd,&buf_stat);
-
-    char *send_buffer = (char*)mmap(NULL,buf_stat.st_size,PROT_READ | PROT_WRITE, MAP_SHARED,file_fd, 0);
-
-
-    bzero(c,sizeof(c));
-    sprintf(c,"filesize: %d\r\n\r\n",buf_stat.st_size);
-    r = send_n(fd,c,strlen(c));
-    if (r < 0) {
-        cout << "send_n err" << endl;
-    }
-
-    r = send_n(fd,send_buffer,buf_stat.st_size);
-    if(r < 0) {
-        cout << "send_n err" << endl;
-    }
-    munmap(send_buffer,buf_stat.st_size);
-    ftruncate(file_fd,strlen("It is a secret"));
-    write(file_fd,"It is a secret",strlen("It is a secret"));
-    old_close(file_fd);
-}
 
 
 
@@ -338,11 +224,6 @@ get_etcs::get_etcs()
             continue;
         }
     }
-//    printf("path = %s\n",PATH);
-//    printf("UNIXSOCKPATH = %s\n",UNIXSOCKPATH);
-//    printf("ETC_ADDR = %s\n",ETC_ADDR);
-//    printf("ETC_PORT = %d\n",ETC_PORT);
-
     //关闭配置文件
     int t = old_close(fd);
     if(t < 0)

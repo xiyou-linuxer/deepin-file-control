@@ -24,8 +24,6 @@
 using namespace std;
 
 static int UNIX;
-typedef int(*OPEN)(const char*, int, ...);
-typedef int(*CLOSE)(int);
 void rmfd(int epfd, int fd);
 
 
@@ -68,6 +66,7 @@ public:
     /*分析被监测事件的类型,线程池轮询事件队列的接口*/
     void do_process();
     
+    friend void tcp_read(int epfd,int i_socketfd);
     /*Unix写到hook.c进程函数*/
     bool u_write(){
         int r=send(u_socketfd,"OPEN_CALL_OK\r\n",strlen("OPEN_CALL_OK"),0);
@@ -84,11 +83,6 @@ public:
     /**!!!划重点！由于用的是ET非阻塞模式，所以读取的时候一定要保证读到EAGAIN为止**/
     /*Unix读取hook.c进程发送包函数*/
     bool u_read();
-    /*与远端服务器连接的函数*/
-    bool i_read(){
-        int r=send(u_socketfd,"OPEN_CALL_OK\r\n",strlen("OPEN_CALL_OK"),0);
-        //Monitored_modfd(epfd, u_socketfd, EPOLLIN);
-        return true;}
 
 private:
     /*unix套接字的读取缓冲区*/
@@ -109,7 +103,8 @@ private:
     
     /*发送文件函数*/
     int send_n(int fd,char *buffer,int n);
-    
+    /*接收TCP套接字响应*/
+    int recv_n(int fd,char *buffer,int flag,int _size);
     /*获取每行并且解析*/
     bool get_line(const char *test_buf){return true;}
 
@@ -260,6 +255,7 @@ bool Monitored_event::i_write()
     return true;
 
 }
+
 /*只获取协议包的包头*/
 bool Monitored_event :: u_read()
 {
@@ -348,7 +344,6 @@ void Monitored_event::do_process()
     }
 }
 
-
 /*设置为非阻塞模式*/
 int setnonblocking(int fd)
 {
@@ -384,6 +379,121 @@ void modfd(int epfd, int fd, int ev)
     epoll_ctl(epfd,EPOLL_CTL_MOD,fd,&event);
 }
 
+
+void tcp_read(int epfd,int i_socketfd)
+{
+    char read[100];
+    bzero(read,sizeof(read));
+    if ( recv_n(i_socketfd,read,0,0) < 0)
+    {
+        cout << "recv_n err:" << endl;
+
+    }
+    cout << "recve of server = " << read << endl;
+
+
+    if ( strncmp("SAVE",read,strlen("SAVE")) == 0 )
+    {
+        char read1[100];
+        bzero(read1,sizeof(read1));
+        if ( recv_n(i_socketfd,read1,0,0) < 0)
+        {
+            cout << "recv_n err:" << endl;
+
+        }
+        cout << "recve of server = " << read1 << endl;
+
+
+        int _space = 0;
+        for(int i = 0;i < strlen(read);i++)
+        {
+            if(read[i] == '\r') {
+                read[i] = (char)0;
+            }
+            if(read[i] == '\n') {
+                read[i] = (char)0;
+            }
+            if(read[i] == ' ') {
+                _space = i + 1;
+            }
+        }
+        string read_t(&read[_space]);
+        cout << read_t << endl;
+
+        map<string, int>::iterator it = Monitored_event::repeat_path.find(read_t);
+        if (it == Monitored_event::repeat_path.end())
+        {
+            cout << "repeat_path no" << endl;
+
+        }
+        Monitored_event::repeat_path.erase(it);
+        modfd(epfd, it->second, EPOLLOUT);
+    }
+    else if ( strncmp("GET",read,strlen("GET")) == 0 ){
+        char *b = read;
+        cout << "进入GET" << endl;
+        int spaces = 0;
+        for(spaces = 0;b[spaces] != ' ';spaces++);
+
+        for(int i = 0;i < strlen(b);i++) {
+            if (b[i] == '\r' || b[i] == '\n') {
+                b[i] = char(0);
+            }
+        }
+
+        spaces++;
+        cout << "close path = " << &b[spaces]  << endl;
+        string read_t(&b[spaces]);
+        cout << read_t << endl;
+
+        //获取old_open
+        static void *handle = NULL;
+        static OPEN old_open = NULL;
+        static CLOSE old_close = NULL;
+        if(!handle)
+        {
+            handle = dlopen("libc.so.6", RTLD_LAZY);
+            old_open = (OPEN)dlsym(handle, "open");
+            dlclose(handle);
+        }
+        handle = NULL;
+        if(!handle)
+        {
+            handle = dlopen("libc.so.6", RTLD_LAZY);
+            old_close = (CLOSE)dlsym(handle, "close");
+            dlclose(handle);
+        }
+
+        int close_fd = old_open(&b[strlen("GET-STATUS") + 1],O_RDWR);
+        if (close_fd < 0) {
+            perror("710 close_fd err:");
+        }
+
+        char line2[200] = { 0 };
+        bzero(line2,0);
+        recv_n(i_socketfd,line2,0,0);
+        int close_filesize = atoi(&line2[strlen("filesize: ")]);
+        cout << "文件大小为:" << close_filesize << endl;
+        if(close_filesize == 0) {
+            ftruncate(close_fd, close_filesize);
+            old_close(close_fd);
+
+        }
+        ftruncate(close_fd, close_filesize);
+        char *send_buffer = (char*)mmap(NULL,close_filesize,PROT_READ | PROT_WRITE, MAP_SHARED,close_fd, 0);
+
+        recv_n(i_socketfd,send_buffer,1,close_filesize);
+        munmap(send_buffer,close_filesize);
+        old_close(close_fd);
+
+        cout << "old_close ok!" << endl;
+        cout << read_t << endl;
+        map<string, int>::iterator it = Monitored_event::repeat_path.find(read_t);
+
+        cout << it->second << endl;
+        modfd(epfd, it->second, EPOLLOUT);
+    }
+}
 
 int main()
 {
@@ -441,17 +551,17 @@ int main()
     }
     cout << "TCP请求链接成功\n";
     cout <<"u_socketfd: "<<u_socketfd <<" i_socketfd: " <<i_socketfd<<endl;
-    
+
     /*创建epoll*/
     int epfd;
     epoll_event events[1000];
     epfd = epoll_create(5);
     assert(epfd != -1);
-    
+
     /*向epoll中注册Unix本地套接字和网络套接字*/
     addfd(epfd, u_socketfd, false);//进程之间的通信u_socketfd作为服务端,需要处理多个进程连接,不能为EPOLLNESHOT事件
     addfd(epfd, i_socketfd, true);//网络通信作为客户端,只能有一个线程占有，所以为EPOLLNESHOT
-    
+
     while(true)
     {
         int timeout = -1;
@@ -464,7 +574,7 @@ int main()
         for(int i=0; i<number; i++)
         {
             int now_sockfd = events[i].data.fd;
-            
+
             /*本地进程有新连接*/
             if(now_sockfd == u_socketfd)
             {
@@ -496,19 +606,19 @@ int main()
                     cout << "i_socketfd is close\n";
                 }
                 else{
-                /*出现异常，事件自动关闭套接字*/
-                close(now_sockfd);
-                cout << "出现异常，关闭进程连接\n";
+                    /*出现异常，事件自动关闭套接字*/
+                    close(now_sockfd);
+                    cout << "出现异常，关闭进程连接\n";
                 }
             }
 
             /*epoll事件表中有u_socketfd读取事件，或者是i_socketfd有读取时间*/
             else if(events[i].events & EPOLLIN)//可以读取
             {
-                cout << "mayicheng\n";
                 if(now_sockfd == i_socketfd)//i_socketfd网络套接字可读取,处理服务端返回的信息
                 {
-                    char read[100];
+                    tcp_read(epfd,i_socketfd);
+                    /*char read[100];
                     bzero(read,sizeof(read));
                     if ( recv_n(i_socketfd,read,0,0) < 0)
                     {
@@ -553,15 +663,7 @@ int main()
                             continue;
                         }
                         Monitored_event::repeat_path.erase(it);
-                        cout << "mayicheng OPEN: " << it->second << endl;
                         modfd(epfd, it->second, EPOLLOUT);
-
-
-                       /* if(my_monitored_event[it->second].i_read())//读取成功，备份或者下载文件
-                        {
-                            cout << "^^^^\n";
-                            continue;
-                        }*/
                     }
                     else if ( strncmp("GET",read,strlen("GET")) == 0 ){
                         char *b = read;
@@ -625,30 +727,13 @@ int main()
                         map<string, int>::iterator it = Monitored_event::repeat_path.find(read_t);
 
                         cout << it->second << endl;
-                        cout << "mayicheng CLOSE: " << it->second<<endl;
-                        //int r=send(it->second,"CLOS_CALL_OK\r\n",strlen("CLOS_CALL_OK"),0);
-                        //cout << "hujinyun: " << r << endl;
-
                         modfd(epfd, it->second, EPOLLOUT);
-                        //rmfd(epfd,it->second);
-                        //Monitored_event::repeat_path.erase(it);
-                        //int r=send(it->second,"CLOS_CALL_OK\r\n",strlen("CLOS_CALL_OK"),0);
-                        //cout << "hujinyun: " << r << endl;
-                        /*if(my_monitored_event[it->second].i_read())//读取成功，备份或者下载文件
-                        {
-                            cout << "^^^^\n";
-                            //continue;
-                        }*/
-                    }
+                    }*/
                 }
                 /*u_socketfd套接字有可读事件,并且读入将内容读入缓冲区*/
                 else{
-                    cout << "UNix两次进入可读事件\n";
-                    cout << "Unix read!\n";
                     if( my_monitored_event[now_sockfd].u_read() ) //读取成功,加入任务列表
                     {
-
-                        cout << "unix read!\n";
                         monitored_pool->addjob(my_monitored_event+now_sockfd);
                     }
                 }
@@ -666,16 +751,14 @@ int main()
                     {
                         cout << "send is successful! UNIX: : " << UNIX << endl;
                         modfd(epfd, i_socketfd, EPOLLIN);
-                        //exit(0);
                     }
                 }
                 /*向被监控进程发送返回状态*/
                 else{
-                    cout << "@@@@hujialu\n";
                     /*向被监控进程返回状态成功*/
                     if(my_monitored_event[now_sockfd].u_write())
                     {
-
+                        cout << "检测成功\n";
                     }
                 }
 
