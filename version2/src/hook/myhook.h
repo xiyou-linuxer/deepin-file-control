@@ -24,5 +24,3 @@ enum TYPE_HOOK{SAVE=0,GET};
 // * Unix套接字发送消息失败,Unix套接字接收消息失败
 enum MONITOR_STATE{OPEN_SAVE_OK,CLOSE_GET_OK,OPEN_SAVE_FAILT,CLOSE_GET_FAILT,USOCKET_FAILT,UCONNECT_FAILT,UWRITE_FAILT};*/
 
-#define FILE_PATH "/home/ma/deepin-file-control/version2/etc/file.conf"
-#define LOG_PATH "/home/ma/deepin-file-control/version2/log/hook.log"
