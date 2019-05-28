@@ -16,14 +16,7 @@
 #include <dlfcn.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include<arpa/inet.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <fcntl.h>
-#include <assert.h>
-#include <errno.h>
 #include <net/if.h>
 #include <vector>
 #include "sendn.hpp"
@@ -35,41 +28,6 @@ typedef int(*OPEN)(const char*, int, ...);
 typedef int(*CLOSE)(int);
 void rmfd(int epfd, int fd);
 
-/*
-char* get_mac()
-{
-    char *c = new char[200];
-
-    struct   ifreq   ifreq1;
-    int   sock;
-
-    if((sock=socket(AF_INET,SOCK_STREAM,0)) <0)
-    {
-        perror( "socket ");
-        return NULL;
-    }
-
-
-    //这个网卡这得改!!!
-    //这个网卡这得改!!!
-    //这个网卡这得改!!!
-    char *etho = "wlp2s0";
-    strcpy(ifreq1.ifr_name,etho);
-    if(ioctl(sock,SIOCGIFHWADDR,&ifreq1) <0)
-    {
-        perror( "ioctl ");
-        return NULL;
-    }
-    sprintf(c, "%02x:%02x:%02x:%02x:%02x:%02x\n ",
-            (unsigned   char)ifreq1.ifr_hwaddr.sa_data[0],
-            (unsigned   char)ifreq1.ifr_hwaddr.sa_data[1],
-            (unsigned   char)ifreq1.ifr_hwaddr.sa_data[2],
-            (unsigned   char)ifreq1.ifr_hwaddr.sa_data[3],
-            (unsigned   char)ifreq1.ifr_hwaddr.sa_data[4],
-            (unsigned   char)ifreq1.ifr_hwaddr.sa_data[5]);
-    return c;
-}
-*/
 
 class Monitored_event{
 public:
@@ -81,6 +39,7 @@ public:
     static const int READ_BUF_SIZE = 2048;
     static const int WRITE_BUF_SIZE = 1024;
     static map<string, int> repeat_path;//查看是否是重复文件
+    static int SERVER_STATUS;
 private:
     static int epfd;//所有被监测的事件共同使用一个epoll注册事件
     static int i_socketfd;//所有被监测的事件共同使用一个远程连接
@@ -111,12 +70,11 @@ public:
     
     /*Unix写到hook.c进程函数*/
     bool u_write(){
-        cout<< "jinru send unix\n";
         int r=send(u_socketfd,"OPEN_CALL_OK\r\n",strlen("OPEN_CALL_OK"),0);
-        cout << "hujinyun: " << r << endl;
         rmfd(epfd,u_socketfd);
         repeat_path.erase(file_name);
         Monitored_modfd(epfd, u_socketfd, EPOLLIN);
+        Monitored_modfd(epfd, i_socketfd, EPOLLIN);
         return true;
     }
     
@@ -128,9 +86,7 @@ public:
     bool u_read();
     /*与远端服务器连接的函数*/
     bool i_read(){
-        cout<< "jinru send unix\n";
         int r=send(u_socketfd,"OPEN_CALL_OK\r\n",strlen("OPEN_CALL_OK"),0);
-        cout << "hujinyun: " << r << endl;
         //Monitored_modfd(epfd, u_socketfd, EPOLLIN);
         return true;}
 
@@ -171,7 +127,7 @@ map<string, int> Monitored_event::repeat_path = map<string, int>();//map初始�
 int Monitored_event::epfd=-1;//所有被监测的事件共同使用一个epoll注册事件
 int Monitored_event::i_socketfd=-1;//所有被监测的事件共同使用一个远程连接
 int Monitored_event:: Monitored_number=0;//所有被监测事件的个数
-
+int Monitored_event::SERVER_STATUS=0;
 /*REPEAT 处理*/
 void Monitored_event::fill_uwrite_buf(Request_State state)
 {
@@ -184,10 +140,8 @@ void Monitored_event::fill_uwrite_buf(Request_State state)
 
 int Monitored_event::send_n(int fd,char *buffer,int n)
 {
-    cout << "jinru\n";
     int num = 0;
     while ( num < n ) {
-        cout << "***\n";
         int t = send( fd,&buffer[num],n - num,0 );
         if ( t < 0 ) {
             if( errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK ) {
@@ -200,13 +154,11 @@ int Monitored_event::send_n(int fd,char *buffer,int n)
             }
         }
         else if ( t == 0 ) {
-            cout << "server close" << endl;
             return -1;
         } else {
             num += t;
         }
     }
-    cout << "number: " << num << endl;
     return num;
 }
 
@@ -249,9 +201,6 @@ void Monitored_event::fill_swrite_buf(Request_State state){
         file_length = buf_stat.st_size;
         sprintf(unix_write_buf,"SAVE %s %s\r\nfilesize: %ld\r\n\r\n",file_name.c_str(),mac_addr,file_length);
         unix_write_buf[strlen(unix_write_buf)+1] = '\0';
-        /*int r = send_n(i_socketfd,unix_write_buf,strlen(unix_write_buf));
-        cout << "send number of " << r << endl;
-        cout << " OPEN: unix_write_buf: \n" << unix_write_buf << endl;*/
         break;
     }
     case CLOSE_GET:
@@ -259,9 +208,6 @@ void Monitored_event::fill_swrite_buf(Request_State state){
         mac_addr = get_mac();
         sprintf(unix_write_buf,"GET %s %s\r\nfilesize: 0\r\n\r\n", file_name.c_str(), mac_addr);
         unix_write_buf[strlen(unix_write_buf)+1] = '\0';
-        /*int r = send_n(i_socketfd,unix_write_buf,strlen(unix_write_buf));
-        cout << "send number of " << r << endl;
-        cout << "CLOSE:unix_write_buf: \n" << unix_write_buf << endl;*/
         break;
     }
     }
@@ -344,7 +290,6 @@ bool Monitored_event :: u_read()
 /*解析读取缓冲区的内容,只解析头部*/
 Monitored_event::Request_State Monitored_event::parse_read_buf()
 {
-    cout << "unix_read_buf$$$$$:" << unix_read_buf << endl;
     string read_package(unix_read_buf);
     string type;
     /*第一个空格分割*/
@@ -361,6 +306,12 @@ Monitored_event::Request_State Monitored_event::parse_read_buf()
         repeat_path.insert(pair<string ,int>(file_name, u_socketfd));
         if(type=="OPEN")
         {
+            if(Monitored_event::SERVER_STATUS)
+            {
+                int ret;
+                ret = write(u_socketfd,"FORBIDDEN",10);
+                assert(ret>0);
+            }
             return OPEN_SAVE;
         }
         else if(type=="CLOS")
@@ -381,23 +332,18 @@ void Monitored_event::do_process()
 {
     /*解析进程发送的包,OPEN相当于向服务器申请备份,CLOSE属于向服务器申请取备份*/
     Request_State ret = parse_read_buf();
-    cout << "jiexi package\n";
     /*如果为重复open，需要直接给Unix套接字返回信息,不向服务器发送信息*/
     if(ret == REPEAT_FILE)
     {
-        cout << "again```" << endl;
         /*填写Unix套接字响应请求类型*/
         fill_uwrite_buf(ret);
     }
 
     /*如果不重复,根据是OPEN请求还是CLOSE请求发送给服务器*/
     else{
-        cout << "fill_swrite_buf\n";
         fill_swrite_buf(ret);
         UNIX = u_socketfd;
         int r = send_n(i_socketfd,unix_write_buf,strlen(unix_write_buf));
-        cout << "马艺诚:send number of " << r << endl;
-        cout << " OPEN: unix_write_buf: \n" << unix_write_buf << endl;
         Monitored_modfd(epfd, i_socketfd, EPOLLOUT);
     }
 }
@@ -438,68 +384,6 @@ void modfd(int epfd, int fd, int ev)
     epoll_ctl(epfd,EPOLL_CTL_MOD,fd,&event);
 }
 
-/*
-//flag = 1是知道size,flag = 0是不知道size,是读取\r\n的
-int recv_n(int fd,char *buffer,int flag,int _size)
-{
-    if(flag == 0) {
-        while (1) {
-            char b[100];
-            bzero(b,sizeof(b));
-            int n = recv(fd,(void *)b,sizeof(b),MSG_PEEK);
-            if ( n < 0) {
-                perror("recv err in recv_n:");
-            } else if (n == 0) {
-                perror("close server in recv_n:");
-                return -1;
-            } else {
-                int i = 0;
-                for(i = 0;i < n;i++)
-                {
-                    if (b[i] == '\n') {
-                        break;
-                    }
-                }
-                //如果b[i] != '\n',说明读的少
-                if (i == n || b[i] != '\n' || b[i + 1] == 0) {
-                    continue;
-                }
-
-                if (b[i + 1] != '\r') {      //如果不是\r,说明可以取了
-                    return recv_n(fd,buffer,1,i + 1);
-                } else if (b[i + 1] == '\r' &&  b[i + 2] == '\n') {
-                    return recv_n(fd,buffer,1,i + 3);
-                }
-                else {
-                    continue;
-                }
-            }
-        }
-    }
-    // 否则就不需要预读了
-    else if (flag == 1) {
-        int sum = 0;
-        while (sum < _size) {
-            int m = recv(fd,&buffer[sum],_size - sum,0);
-            if(m < 0) {
-                continue;
-            } else if(m == 0) {
-                perror("server close:");
-                return -1;
-            } else {
-                sum += m;
-            }
-        }
-        cout << "buffer = " << buffer << "    _size = " << _size << endl;
-        return 0;
-    }
-    // 如果flag错误
-    else {
-        cout << "flags err:" << endl;
-        return -1;
-    }
-}
-*/
 
 int main()
 {
@@ -539,18 +423,18 @@ int main()
     bzero(&myclient,sizeof(myclient));
     int i_socketfd;
     i_socketfd = socket(AF_INET, SOCK_STREAM, 0);
+    setnonblocking(i_socketfd);
     if(i_socketfd < 0 )
     {
         cout << "i_socketfd is failt\n";
         return 0;
     }
     myclient.sin_family = AF_INET;
+    cout << GET_ETC->ETC_ADDR << endl;
     myclient.sin_port = htons(GET_ETC->ETC_PORT);
-    //const char *ip="192.168.3.87";
     inet_pton(AF_INET, GET_ETC->ETC_ADDR, (void *)&myclient.sin_addr);
-    //myclient.sin_addr.s_addr = htons(INADDR_ANY);
     ret  = connect(i_socketfd,(struct sockaddr*)&myclient,sizeof(myclient));
-    if(ret < 0)
+    if(ret < 0 && errno!=EINPROGRESS)
     {
         cout << "connect is failt\n";
         return 0;
@@ -572,7 +456,6 @@ int main()
     {
         int timeout = -1;
         int number = epoll_wait(epfd, events, 1000, timeout);
-        //int start = time( NULL );
         if( (number < 0) && (errno != EINTR) )
         {
             printf("my epoll is failure!\n");
@@ -606,9 +489,11 @@ int main()
                 /*若服务器断开链接，则监测系统不允许打开任何文件*/
                 if(now_sockfd == i_socketfd)//此处服务端不可到达,需要让本地被监测的open调用都失败
                 {
+                    Monitored_event::SERVER_STATUS = 1;
+                    rmfd(epfd,i_socketfd);
                     //timeout = 3000;
                     /*重新连接的接口*/
-                    cout << "i_socketfd is errno\n";
+                    cout << "i_socketfd is close\n";
                 }
                 else{
                 /*出现异常，事件自动关闭套接字*/
@@ -620,6 +505,7 @@ int main()
             /*epoll事件表中有u_socketfd读取事件，或者是i_socketfd有读取时间*/
             else if(events[i].events & EPOLLIN)//可以读取
             {
+                cout << "mayicheng\n";
                 if(now_sockfd == i_socketfd)//i_socketfd网络套接字可读取,处理服务端返回的信息
                 {
                     char read[100];
