@@ -24,11 +24,6 @@ static void sig_int(int signo)
     fprintf(stderr, "\n");
 }
 
-void printStr(const char *s)
-{
-    std::cout << s << std::endl;
-}
-
 int main(void)
 {
     signal(SIGINT,  sig_int);
@@ -50,8 +45,5 @@ int main(void)
                 std::placeholders::_1,
                 std::placeholders::_2));
     loop.addChannel(chl);
-    // loop.runEvery(300, []{ std::cout << "hello" << std::endl; });
-    // loop.runEvery(300, std::bind(&printStr, "hello, world"));
-    // loop.runAfter(2000, std::bind(&printStr, "1234523452345"));
     loop.run();
 }
