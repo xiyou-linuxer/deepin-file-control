@@ -206,7 +206,6 @@ void Monitored_event::fill_swrite_buf(Request_State state){
         break;
     }
     }
-    cout << "%%%%:" << unix_write_buf << endl;
 }
 
 /*TCP套接字发送*/
@@ -236,7 +235,6 @@ bool Monitored_event::i_write()
         pthread_exit(0);
     }
 
-    cout << "file_length = " << file_length << endl;
     char *send_buffer = (char*)mmap(NULL,file_length,PROT_READ | PROT_WRITE, MAP_SHARED,file_fd, 0);
 
 

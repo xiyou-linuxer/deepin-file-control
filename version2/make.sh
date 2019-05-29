@@ -1,4 +1,5 @@
 #!/bin/bash
+gcc -fPIC -shared -o ./test/myhook.so ./src/hook/myhook.c -ldl
 PATH=`pwd`
 REA="#define FILE_PATH \""
 REA+=$PATH
