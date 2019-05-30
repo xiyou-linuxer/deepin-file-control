@@ -1,3 +1,0 @@
-DEBUG: 2019-05-30 22:18:11.0424 Server.cc:41:main: [Server is listening port 8888]
-DEBUG: 2019-05-30 22:18:11.0424 Server.cc:42:main: [listenfd is 5]
-DEBUG: 2019-05-30 22:18:11.0424 EventLoop.cc:19:run: [timeout is -1]
