@@ -24,3 +24,4 @@ cd src/hook
 `./build.sh`
 cd ../..
 
+`touch etc/unix`

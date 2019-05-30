@@ -196,10 +196,11 @@ get_etcs::get_etcs()
     }
 
     //读取配置文件
-    char c[200];
+    char c[2048];
     bzero(c,sizeof(c));
     read(fd,c,sizeof(c));
 
+    printf("%s\n",c);
     const int j = strlen(c);
 
     for (int i = 0;i < j;i++) {
@@ -224,6 +225,9 @@ get_etcs::get_etcs()
             continue;
         }
     }
+    printf("%s\n",ETC_ADDR);
+    printf("%s\n",UNIXSOCKPATH);
+     printf("%s\n",PATH);
     //关闭配置文件
     int t = old_close(fd);
     if(t < 0)
