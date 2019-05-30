@@ -1,3 +1,9 @@
-## 请看version2
+## deepin-file-control
 
-version1是最初版本,仅为实现功能!
+### 编译方法
+
+```
+chmod 777 make.sh
+
+./make.sh
+```
