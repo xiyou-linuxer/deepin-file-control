@@ -1,7 +1,10 @@
 #!/bin/bash
 gcc -fPIC -shared -o ./test/myhook.so ./src/hook/myhook.c -ldl
-g++ -std=c++11 -o ./test/cli ./src/cli/*.cpp -lpthread -ldl
-sudo g++ -std=c++11 -o ./test/server ./src/server/*.cc -lpthread -ldl
+g++ -std=c++11 -o ./test/client ./src/client/*.cpp -lpthread -ldl
+cd src/server
+exec ./build.sh
+cd ../..
+# sudo g++ -std=c++11 -o ./test/server ./src/server/*.cc -lpthread -ldl
 
 PATH=`pwd`
 REA="#define FILE_PATH \""

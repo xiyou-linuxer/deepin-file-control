@@ -24,9 +24,9 @@ void Socket::setReuseAddr(void)
 
 void Socket::setNodelay(void)
 {
-    socklen_t on = 1;
-    if (setsockopt(_sockfd, SOL_SOCKET, TCP_NODELAY, &on, sizeof(on)) < 0)
-        logError("set TCP_NODELAY failed: %s", strerror(errno));
+//    socklen_t on = 1;
+//    if (setsockopt(_sockfd, SOL_SOCKET, TCP_NODELAY, &on, sizeof(on)) < 0)
+//        logError("set TCP_NODELAY failed: %s", strerror(errno));
 }
 
 void Socket::listen(void)
