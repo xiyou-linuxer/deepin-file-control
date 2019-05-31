@@ -225,9 +225,6 @@ get_etcs::get_etcs()
             continue;
         }
     }
-    printf("%s\n",ETC_ADDR);
-    printf("%s\n",UNIXSOCKPATH);
-     printf("%s\n",PATH);
     //关闭配置文件
     int t = old_close(fd);
     if(t < 0)
