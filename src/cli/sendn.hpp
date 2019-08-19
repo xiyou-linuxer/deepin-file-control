@@ -24,7 +24,7 @@
 using namespace std;
 
 
-#define FILE_PATH "../../etc/file.conf"
+#define FILE_PATH "../etc/file.conf"
 
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mutex_map = PTHREAD_MUTEX_INITIALIZER;
@@ -196,10 +196,11 @@ get_etcs::get_etcs()
     }
 
     //读取配置文件
-    char c[200];
+    char c[2048];
     bzero(c,sizeof(c));
     read(fd,c,sizeof(c));
 
+    printf("%s\n",c);
     const int j = strlen(c);
 
     for (int i = 0;i < j;i++) {

@@ -148,7 +148,7 @@ void get_etc()
     }
 
     //读取配置文件
-    char c[200];
+    char c[2000];
     bzero(c,sizeof(c));
     read(fd,c,sizeof(c));
 

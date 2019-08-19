@@ -1,10 +1,3 @@
-/*************************************************************************
-	> File Name: threadpool.h
-	> Author:jialuhu 
-	> Mail: 
-	> Created Time: Tue 11 Sep 2018 02:19:48 PM CST
- ************************************************************************/
-
 #ifndef _THREADPOOL_H
 #define _THREADPOOL_H
 #include<iostream>
@@ -163,7 +156,6 @@ threadpool<T> :: threadpool()
     }
     for(int i=0; i<max_thread; i++)
     {
-        cout << "Create the pthread:" << i << endl;
         if(pthread_create(pthread_poll+i, NULL, worker, this)!=0)
         {
             delete [] pthread_poll;
