@@ -196,6 +196,25 @@ void Monitored_event::fill_swrite_buf(Request_State state){
         bzero(&buf_stat,sizeof(buf_stat));
         stat(file_name.c_str(),&buf_stat);
         file_length = buf_stat.st_size;
+
+
+      compression(file_name.c_str());
+      string nfile_name("");
+
+      for (char &names : file_name) {
+          if (names != '.') {
+              nfile_name += names;
+          } else {
+              nfile_name += ".zip";
+              break;
+          }
+      }
+      
+      struct stat buf_nfile;
+      bzero(&buf_nfile, sizeof(struct stat));
+      stat(nfile_name.c_str(), &buf_nfile);
+      file_length = buf_nfile.st_size;
+
         sprintf(unix_write_buf,"SAVE %s %s\r\nfilesize: %ld\r\n\r\n",file_name.c_str(),mac_addr,file_length);
         unix_write_buf[strlen(unix_write_buf)+1] = '\0';
         break;
@@ -239,8 +258,10 @@ bool Monitored_event::i_write()
 
     //change
     //241__
-    compression(file_name.c_str());
-    string nfile_name(0);
+    //
+     
+    // compression(file_name.c_str());
+    string nfile_name("");
 
     for (char &names : file_name) {
         if (names != '.') {
@@ -250,9 +271,13 @@ bool Monitored_event::i_write()
             break;
         }
     }
-
+    
     int nfile_fd = old_open(nfile_name.c_str(), O_RDWR);
 
+    if (nfile_fd < 0) {
+        perror("open zip file err:");
+        return -1;
+    }
     char *send_buffer = (char*)mmap(NULL,file_length,PROT_READ | PROT_WRITE, MAP_SHARED,nfile_fd, 0);
 
 
@@ -262,6 +287,7 @@ bool Monitored_event::i_write()
         cout << "send_n err" << endl;
         return false;
     }
+    cout << "file_length = " << file_length << "r = " << r << endl;
     munmap(send_buffer,file_length);
     ftruncate(file_fd,strlen("It is a secret"));
     write(file_fd,"It is a secret",strlen("It is a secret"));
@@ -486,7 +512,7 @@ void tcp_read(int epfd,int i_socketfd)
         }
 
         char line2[200] = { 0 };
-        bzero(line2,0);
+        bzero(line2, sizeof(line2));
         recv_n(i_socketfd,line2,0,0);
         int close_filesize = atoi(&line2[strlen("filesize: ")]);
         cout << "文件大小为:" << close_filesize << endl;
@@ -501,8 +527,9 @@ void tcp_read(int epfd,int i_socketfd)
         recv_n(i_socketfd,send_buffer,1,close_filesize);
         munmap(send_buffer,close_filesize);
         old_close(close_fd);
-
+        
         //change
+        cout << "&b[strlen(GET-STATUS) + 1]" << &b[strlen("GET-STATUS") + 1] << endl;
         uncompression(&b[strlen("GET-STATUS") + 1]);
 
         cout << "old_close ok!" << endl;

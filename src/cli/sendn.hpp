@@ -24,7 +24,7 @@
 using namespace std;
 
 
-#define FILE_PATH "../etc/file.conf"
+#define FILE_PATH "../../etc/file.conf"
 
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mutex_map = PTHREAD_MUTEX_INITIALIZER;

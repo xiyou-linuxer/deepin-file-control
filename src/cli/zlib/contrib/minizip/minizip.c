@@ -94,7 +94,8 @@ uLong filetime(f, tmzip, dt)
   return ret;
 }
 #else
-#ifdef unix || __APPLE__
+//#ifdef unix || __APPLE__
+#if defined(unix) || defined(_APPLE_)
 uLong filetime(f, tmzip, dt)
     char *f;               /* name of file to get info on */
     tm_zip *tmzip;         /* return value: access, modific. and creation times */
@@ -346,15 +347,8 @@ int main(argc,argv)
                 char rep=0;
                 do
                 {
-                    char answer[128];
-                    int ret;
-                    printf("The file %s exists. Overwrite ? [y]es, [n]o, [a]ppend : ",filename_try);
-                    ret = scanf("%1s",answer);
-                    if (ret != 1)
-                    {
-                       exit(EXIT_FAILURE);
-                    }
-                    rep = answer[0] ;
+                  //  printf("...\n");
+                    rep = 'y' ;
                     if ((rep>='a') && (rep<='z'))
                         rep -= 0x20;
                 }

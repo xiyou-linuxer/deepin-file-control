@@ -17,7 +17,6 @@
 #include <string.h>
 #include <string>
 
-
 static inline void compression(const char *pathname)
 {                                                                            
     std::string file(pathname);
@@ -26,7 +25,6 @@ static inline void compression(const char *pathname)
         execl("./zlib/contrib/minizip/minizip", "-o", "-9","-p", "jflsakfj22o9if", zipname.c_str(), pathname, NULL);
     }
     wait(NULL);
-
 }
 
 static inline void uncompression(const char *pathname)
