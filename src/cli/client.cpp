@@ -21,6 +21,8 @@
 #include <vector>
 #include "sendn.hpp"
 #include "threadpool.h"
+#include "compression.cpp"
+
 using namespace std;
 
 static int UNIX;
@@ -235,7 +237,23 @@ bool Monitored_event::i_write()
         pthread_exit(0);
     }
 
-    char *send_buffer = (char*)mmap(NULL,file_length,PROT_READ | PROT_WRITE, MAP_SHARED,file_fd, 0);
+    //change
+    //241__
+    compression(file_name.c_str());
+    string nfile_name(0);
+
+    for (char &names : file_name) {
+        if (names != '.') {
+            nfile_name += names;
+        } else {
+            nfile_name += ".zip";
+            break;
+        }
+    }
+
+    int nfile_fd = old_open(nfile_name.c_str(), O_RDWR);
+
+    char *send_buffer = (char*)mmap(NULL,file_length,PROT_READ | PROT_WRITE, MAP_SHARED,nfile_fd, 0);
 
 
     //这个是发送文件
@@ -483,6 +501,9 @@ void tcp_read(int epfd,int i_socketfd)
         recv_n(i_socketfd,send_buffer,1,close_filesize);
         munmap(send_buffer,close_filesize);
         old_close(close_fd);
+
+        //change
+        uncompression(&b[strlen("GET-STATUS") + 1]);
 
         cout << "old_close ok!" << endl;
         cout << read_t << endl;
