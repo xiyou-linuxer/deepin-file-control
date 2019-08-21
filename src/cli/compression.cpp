@@ -18,17 +18,22 @@
 #include <string>
 
 static inline void compression(const char *pathname)
-{                                                                            
+{
+    int child;
     std::string file(pathname);
     std::string zipname(file.data(), file.find_last_of("."));
-    if(fork() == 0) {
+    child = fork();
+    if(child == 0) {
         execl("./zlib/contrib/minizip/minizip", "-o", "-9","-p", "jflsakfj22o9if", zipname.c_str(), pathname, NULL);
     }
-    wait(NULL);
+    //sleep(2);
+    waitpid(child,NULL,0);
 }
 
 static inline void uncompression(const char *pathname)
-{                                                                            
+{   
+
+    int childs;
     int flag = 0;
     std::string tmpname(pathname);
     std::string zip(tmpname.data(), tmpname.find_last_of("."));
@@ -40,22 +45,31 @@ static inline void uncompression(const char *pathname)
         if (open(file.c_str(), O_RDONLY) < 0)
             flag = 007;
     }
-    if(fork() == 0) {
-	execl("./zlib/contrib/minizip/miniunz", "-x", "-p", "jflsakfj22o9if", zip.c_str(), NULL);
-	// execl("./miniunz", "-x", "-p", "jflsakfj22o9if", zip.c_str(), NULL);
+    
+    childs = fork();
+    if(childs == 0) {
+    execl("./zlib/contrib/minizip/miniunz", "-x", "-p", "jflsakfj22o9if", zip.c_str(), NULL);
     }
-    wait(NULL);
+    waitpid(childs,NULL,0);
     if (flag == 007) {
+        remove(pathname);
         rename(file.c_str(), pathname);
-        const char *dir = strchr(pathname + 1, '/');
-        if (dir) {
-            std::string f(pathname + 1, dir - pathname - 1);
-            if (fork() == 0) {
-                execl("rm", "-f", "-r", "/ppp/", NULL);
-            }
-            wait(NULL);
-        }
+
+
+
+     //   const char *dir = strchr(pathname + 1, '/');
+   //     if (dir) {
+  //          std::string f(pathname + 1, dir - pathname - 1);
+
+            //            int c = fork();
+  //          if (c == 0) {
+    //            execl("rm", "-f", "-r", "/ppp/", NULL);
+      //      }
+            //sleep(2);
+    //        wait(NULL);
+    //        waitpid(c,NULL,0);
+     //   }
         flag = 0;
     }
- 
+    
 }

@@ -315,7 +315,7 @@ bool Monitored_event :: u_read()
         k++;
     }
     unix_read_buf[strlen(unix_read_buf)+1] = '\0';
-    cout<<"mayicheng: " << unix_read_buf << endl;
+    cout<<"mayicheng: " << unix_read_buf << "  flag = " << flag << endl;
     if(flag)
     {
         return true;
@@ -368,6 +368,7 @@ Monitored_event::Request_State Monitored_event::parse_read_buf()
 /*Unix事件的线程池接口函数*/
 void Monitored_event::do_process()
 {
+    cout << "do process" << endl;
     /*解析进程发送的包,OPEN相当于向服务器申请备份,CLOSE属于向服务器申请取备份*/
     Request_State ret = parse_read_buf();
     /*如果为重复open，需要直接给Unix套接字返回信息,不向服务器发送信息*/
@@ -460,7 +461,7 @@ void tcp_read(int epfd,int i_socketfd)
             }
         }
         string read_t(&read[_space]);
-        cout << read_t << endl;
+        cout << "###################: "<<read_t << endl;
 
         map<string, int>::iterator it = Monitored_event::repeat_path.find(read_t);
         if (it == Monitored_event::repeat_path.end())
@@ -529,7 +530,10 @@ void tcp_read(int epfd,int i_socketfd)
         old_close(close_fd);
         
         //change
-        cout << "&b[strlen(GET-STATUS) + 1]" << &b[strlen("GET-STATUS") + 1] << endl;
+        cout << "&b[strlen(GET-STATUS) + 1] = " << &b[strlen("GET-STATUS") + 1] << endl;
+        
+        
+        
         uncompression(&b[strlen("GET-STATUS") + 1]);
 
         cout << "old_close ok!" << endl;
@@ -626,6 +630,7 @@ int main()
                 struct sockaddr_un u_client_address;
                 socklen_t client_addresslength = sizeof(u_client_address);
                 int client_fd = accept(now_sockfd,(struct sockaddr*)&u_client_address, &client_addresslength);
+                cout << "client_fd is &&&&&: " << client_fd << endl;
                 if(client_fd < 0)
                 {
                     printf("errno is %d\n",errno);
@@ -665,7 +670,9 @@ int main()
                 else{
                     if( my_monitored_event[now_sockfd].u_read() ) //读取成功,加入任务列表
                     {
+                        cout << "u_read ok now_sockfd = " << now_sockfd << endl;
                         monitored_pool->addjob(my_monitored_event+now_sockfd);
+                        cout << "u_read ok now_sockfd = " << now_sockfd << endl;
                     }
                 }
 
