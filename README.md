@@ -387,25 +387,25 @@ Linux系统 gcc version 7.3(Debian 7.3.0-19)
 
 #### 2.服务端使用概述
 
-* 打开终端，输入以下命令 （**若没有git，请先安装git**）：
+（1）打开终端，输入以下命令 （**若没有git，请先安装git**）：
 
 ​	 若没有安装过 git ，执行 `sudo apt-get install git` 
 
 ​          `git clone https://github.com/xiyou-linuxer/deepin-file-control.git `
 
-* 打开目录 /deepin-file-control/src/server:
+（2）打开目录 /deepin-file-control/src/server:
 
 ​          `cd deep-file-control/src/server`
 
-* 执行脚本文件 build.sh
+（3）执行脚本文件 build.sh
 
 ​          `./build.sh`
 
-* 执行服务器程序
+（4）执行服务器程序
 
 ​          `./a.out`
 
-* 若上一步的执行可执行文件./a.out 的输出为 LogError：
+（5）若上一步的执行可执行文件./a.out 的输出为 LogError：
 
 ​	  请查看`deepin-file-control/test/.log/.x.log`日志文件来检查错误
 
@@ -425,7 +425,7 @@ Linux系统 gcc version 7.3(Debian 7.3.0-19)
 
 ​       `gedit file.conf`
 
-​       在 file.conf 填写配置文件 
+​       `在 file.conf 填写配置文件` 
 
 ```
 #这个是连接的端口
@@ -438,7 +438,7 @@ path:/home/username/deepin-file-control/etc
 
 （注：服务器地址可以根据自身放置服务器的ip地址而改变 ）      
 
- 	按 Ctrl+s 保存 file.conf 文件
+       `按 Ctrl+s 保存 file.conf 文件`
 
 （4）回到 /deepin-file-control:
 
