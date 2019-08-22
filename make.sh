@@ -6,6 +6,7 @@ REA+=$PATHS
 REA+="/etc/file.conf"
 REA+="\""
 `echo $REA >> src/hook/myhook.h` 
+`echo $REA >> src/cli/fconf.h`
 
 UNIXS="unix:"
 UNIXS+=$PATHS
