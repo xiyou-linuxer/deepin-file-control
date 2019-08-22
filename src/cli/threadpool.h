@@ -186,7 +186,6 @@ bool threadpool<T>::addjob(T* request)
         return false;
     }
     m_myworkqueue.push_back(request);//将请求加入到请求队列中
-    cout << "work work\n";
     m_queuelocker.unlock();
     m_queuestat.post();//将信号量增加1
     return true;
@@ -204,7 +203,6 @@ void threadpool<T> :: run()
 {
     while(!m_stop)
     {
-        cout << "work work2\n";
         m_queuestat.wait();//信号量减1，直到为0的时候线程挂起等待
         m_queuelocker.lock();
         if(m_myworkqueue.empty())
@@ -219,9 +217,7 @@ void threadpool<T> :: run()
         {
             continue;
         }
-        cout << "1111111111\n";
         request->do_process();
-        cout << "1111111111\n";
     }
 }
 

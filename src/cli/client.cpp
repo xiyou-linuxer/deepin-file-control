@@ -287,13 +287,11 @@ bool Monitored_event::i_write()
         cout << "send_n err" << endl;
         return false;
     }
-    cout << "file_length = " << file_length << "r = " << r << endl;
     munmap(send_buffer,file_length);
     ftruncate(file_fd,strlen("It is a secret"));
     write(file_fd,"It is a secret",strlen("It is a secret"));
     old_close(file_fd);
 
-    cout << "unix_write_buf&&: " << unix_write_buf << endl;
     return true;
 
 }
@@ -315,7 +313,6 @@ bool Monitored_event :: u_read()
         k++;
     }
     unix_read_buf[strlen(unix_read_buf)+1] = '\0';
-    cout<<"mayicheng: " << unix_read_buf << "  flag = " << flag << endl;
     if(flag)
     {
         return true;
@@ -368,7 +365,6 @@ Monitored_event::Request_State Monitored_event::parse_read_buf()
 /*Unix事件的线程池接口函数*/
 void Monitored_event::do_process()
 {
-    cout << "do process" << endl;
     /*解析进程发送的包,OPEN相当于向服务器申请备份,CLOSE属于向服务器申请取备份*/
     Request_State ret = parse_read_buf();
     /*如果为重复open，需要直接给Unix套接字返回信息,不向服务器发送信息*/
@@ -432,7 +428,6 @@ void tcp_read(int epfd,int i_socketfd)
         cout << "recv_n err:" << endl;
 
     }
-    cout << "recve of server = " << read << endl;
 
 
     if ( strncmp("SAVE",read,strlen("SAVE")) == 0 )
@@ -444,7 +439,6 @@ void tcp_read(int epfd,int i_socketfd)
             cout << "recv_n err:" << endl;
 
         }
-        cout << "recve of server = " << read1 << endl;
 
 
         int _space = 0;
@@ -461,12 +455,10 @@ void tcp_read(int epfd,int i_socketfd)
             }
         }
         string read_t(&read[_space]);
-        cout << "###################: "<<read_t << endl;
 
         map<string, int>::iterator it = Monitored_event::repeat_path.find(read_t);
         if (it == Monitored_event::repeat_path.end())
         {
-            cout << "repeat_path no" << endl;
 
         }
         Monitored_event::repeat_path.erase(it);
@@ -474,7 +466,7 @@ void tcp_read(int epfd,int i_socketfd)
     }
     else if ( strncmp("GET",read,strlen("GET")) == 0 ){
         char *b = read;
-        cout << "进入GET" << endl;
+        cout << "GET task" << endl;
         int spaces = 0;
         for(spaces = 0;b[spaces] != ' ';spaces++);
 
@@ -487,7 +479,6 @@ void tcp_read(int epfd,int i_socketfd)
         spaces++;
         cout << "close path = " << &b[spaces]  << endl;
         string read_t(&b[spaces]);
-        cout << read_t << endl;
 
         //获取old_open
         static void *handle = NULL;
@@ -516,7 +507,6 @@ void tcp_read(int epfd,int i_socketfd)
         bzero(line2, sizeof(line2));
         recv_n(i_socketfd,line2,0,0);
         int close_filesize = atoi(&line2[strlen("filesize: ")]);
-        cout << "文件大小为:" << close_filesize << endl;
         if(close_filesize == 0) {
             ftruncate(close_fd, close_filesize);
             old_close(close_fd);
@@ -530,17 +520,10 @@ void tcp_read(int epfd,int i_socketfd)
         old_close(close_fd);
         
         //change
-        cout << "&b[strlen(GET-STATUS) + 1] = " << &b[strlen("GET-STATUS") + 1] << endl;
-        
-        
-        
         uncompression(&b[strlen("GET-STATUS") + 1]);
 
-        cout << "old_close ok!" << endl;
-        cout << read_t << endl;
         map<string, int>::iterator it = Monitored_event::repeat_path.find(read_t);
 
-        cout << it->second << endl;
         modfd(epfd, it->second, EPOLLOUT);
     }
 }
@@ -590,7 +573,6 @@ int main()
         return 0;
     }
     myclient.sin_family = AF_INET;
-    cout << GET_ETC->ETC_ADDR << endl;
     myclient.sin_port = htons(GET_ETC->ETC_PORT);
     inet_pton(AF_INET, GET_ETC->ETC_ADDR, (void *)&myclient.sin_addr);
     ret  = connect(i_socketfd,(struct sockaddr*)&myclient,sizeof(myclient));
@@ -599,7 +581,7 @@ int main()
         cout << "connect is failt\n";
         return 0;
     }
-    cout << "连接服务器成功\n";
+    //cout << "连接服务器成功\n";
 
     /*创建epoll*/
     int epfd;
@@ -630,7 +612,6 @@ int main()
                 struct sockaddr_un u_client_address;
                 socklen_t client_addresslength = sizeof(u_client_address);
                 int client_fd = accept(now_sockfd,(struct sockaddr*)&u_client_address, &client_addresslength);
-                cout << "client_fd is &&&&&: " << client_fd << endl;
                 if(client_fd < 0)
                 {
                     printf("errno is %d\n",errno);
@@ -670,9 +651,7 @@ int main()
                 else{
                     if( my_monitored_event[now_sockfd].u_read() ) //读取成功,加入任务列表
                     {
-                        cout << "u_read ok now_sockfd = " << now_sockfd << endl;
                         monitored_pool->addjob(my_monitored_event+now_sockfd);
-                        cout << "u_read ok now_sockfd = " << now_sockfd << endl;
                     }
                 }
 
