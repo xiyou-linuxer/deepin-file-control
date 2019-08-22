@@ -13,7 +13,7 @@ UNIXS+=$PATHS
 UNIXS+="/etc/unix"
 `echo $UNIXS >> etc/file.conf`
 
-g++ -std=c++11 -o ./test/client ./src/cli/*.cpp -lpthread -ldl
+g++ -std=c++11 -o ./src/cli/client ./src/cli/*.cpp -lpthread -ldl
 
 cd src/hook
 `chmod 777 build.sh`
