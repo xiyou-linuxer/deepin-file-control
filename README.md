@@ -437,8 +437,7 @@ path:/home/username/deepin-file-control/etc
 ```
 
 （注：服务器地址可以根据自身放置服务器的ip地址而改变 ）      
-
-       `按 Ctrl+s 保存 file.conf 文件`
+         `按 Ctrl+s 保存 file.conf 文件`
 
 （4）回到 /deepin-file-control:
 
