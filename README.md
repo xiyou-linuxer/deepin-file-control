@@ -1,5 +1,80 @@
 
 # xFileContorl产品说明文档
+ * 点击此可直接跳转查看 [操作手册](https://mp.csdn.net/mdeditor#_301)
+
+
+-  [一、简介](https://mp.csdn.net/mdeditor#_3)
+
+    - - [1.目的](https://mp.csdn.net/mdeditor#1_17)
+      - [2. 范围](https://mp.csdn.net/mdeditor#2__21)
+
+- [二、产品概述](https://mp.csdn.net/mdeditor#_27)
+
+    - - [1. 总体框图](https://mp.csdn.net/mdeditor#1__35)
+
+      - - [1.1 示意图](https://mp.csdn.net/mdeditor#11__37)
+
+        - [1.2 效果](https://mp.csdn.net/mdeditor#12__49)
+
+        - [1.3 流程](https://mp.csdn.net/mdeditor#13__63)
+
+        - - [1.3.1 client](https://mp.csdn.net/mdeditor#131_client_65)
+          - [1.3.2 server](https://mp.csdn.net/mdeditor#132_server_69)
+
+      - [2.功能摘要](https://mp.csdn.net/mdeditor#2_73)
+
+      - - [2.1 客户端](https://mp.csdn.net/mdeditor#21__75)
+        - [2.2 服务端](https://mp.csdn.net/mdeditor#22__85)
+- [三、产品特性](https://mp.csdn.net/mdeditor#_93)
+
+    - - [1. 功能展示](https://mp.csdn.net/mdeditor#1__95)
+
+      - [2. 运行环境](https://mp.csdn.net/mdeditor#2__109)
+
+      - - [2.1 硬件环境](https://mp.csdn.net/mdeditor#21__111)
+
+        - [2.2 软件环境](https://mp.csdn.net/mdeditor#22__117)
+
+        - [运行环境：](https://mp.csdn.net/mdeditor#_119)
+
+        - [开发环境：](https://mp.csdn.net/mdeditor#_123)
+
+        - - [客户端：](https://mp.csdn.net/mdeditor#_125)
+          - [服务端：](https://mp.csdn.net/mdeditor#_131)
+
+- [四、代码框架](https://mp.csdn.net/mdeditor#_139)
+
+    - - [4.1 hook端框架](https://mp.csdn.net/mdeditor#41_hook_141)
+
+      - [4.2 client端框架](https://mp.csdn.net/mdeditor#42_client_157)
+
+      - - [threadpool](https://mp.csdn.net/mdeditor#threadpool_174)
+        - [Monitored_event](https://mp.csdn.net/mdeditor#Monitored_event_187)
+
+      - [4.3 server端框架](https://mp.csdn.net/mdeditor#43_server_204)
+
+      - - [EventLoop](https://mp.csdn.net/mdeditor#EventLoop_216)
+        - [Epoll](https://mp.csdn.net/mdeditor#Epoll_227)
+        - [Channel](https://mp.csdn.net/mdeditor#Channel_240)
+        - [Buffer](https://mp.csdn.net/mdeditor#Buffer_266)
+        - [Socket](https://mp.csdn.net/mdeditor#Socket_280)
+
+      - [4.4 数据展示](https://mp.csdn.net/mdeditor#44__293)
+
+      - - [特性描述](https://mp.csdn.net/mdeditor#_295)
+
+      - [4.5 性能及运行需求](https://mp.csdn.net/mdeditor#45__297)
+
+- [五、操作手册](https://mp.csdn.net/mdeditor#_301)
+
+    - - [1.使用平台](https://mp.csdn.net/mdeditor#1_303)
+      - [2.服务端使用概述](https://mp.csdn.net/mdeditor#2_307)
+      - [3. 客户端使用概述](https://mp.csdn.net/mdeditor#3__331)
+      - [4.使用注意事项](https://mp.csdn.net/mdeditor#4_410)
+
+- [六、问题反馈联系方式](https://mp.csdn.net/mdeditor#_424)
+
+- [七、源代码地址](https://mp.csdn.net/mdeditor#_430)
 
 
 
@@ -17,9 +92,12 @@ xFileContorl客户端工具并不仅仅是监听文件系统事件并上报的�
 
 依据以上信息，进行了xFileContorl第二期的开发，即为xFileContorl2.0进行国产平台计算机软件移植、增加简易用户引导，优化传输大文件速度控制，支持加密传输等等。
 
+
 #### 1.目的
 
 此文档的目的是为使用该产品的开发人员提供直观、清晰、有逻辑、有层次的定义各个模块的内容来源和相关的逻辑、背景、优先级。
+
+
 
 #### 2. 范围
 
@@ -34,6 +112,7 @@ xFileContorl客户端工具并不仅仅是监听文件系统事件并上报的�
 ​	打开xFileContorl后，输入想要检测的目录进行监控后，再去打开此目录下文件 会显示 it's a secret。
 
 ​	客户端主要用来监视和记录指定目录下文件的打开和关闭动作（文件系统事件open 和 close），并上报服务端（文件路径、文件句柄、操作方式等）。客户端在配置了指定的监视服务器情况下，可接受服务端下发的文件操作指令。当监视服务器关闭或者网络不通时，客户端拒绝任何操作，不允许任何人打开文件（拒绝监视目录的一切文件操作）。监视服务器不存在或者未配置时，记录相关的操作到日志文件，监视服务器可以查询历史操作日志。
+
 
 #### 1. 总体框图
 
@@ -137,6 +216,7 @@ xFileContorl客户端工具并不仅仅是监听文件系统事件并上报的�
 
 
 ### 四、代码框架
+![](https://img-blog.csdnimg.cn/2019082302144171.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2tra2tkZQ==,size_16,color_FFFFFF,t_70)
 
 #### 4.1 hook端框架
 hook框架主要由四个函数模块和两个枚举类型组成。
@@ -307,25 +387,25 @@ Linux系统 gcc version 7.3(Debian 7.3.0-19)
 
 #### 2.服务端使用概述
 
-（1） 打开终端，输入以下命令 （**若没有git，请先安装git**）：
+* 打开终端，输入以下命令 （**若没有git，请先安装git**）：
 
 ​	 若没有安装过 git ，执行 `sudo apt-get install git` 
 
 ​          `git clone https://github.com/xiyou-linuxer/deepin-file-control.git `
 
-（2）打开目录 /deepin-file-control/src/server:
+* 打开目录 /deepin-file-control/src/server:
 
 ​          `cd deep-file-control/src/server`
 
-（3）执行脚本文件 build.sh
+* 执行脚本文件 build.sh
 
 ​          `./build.sh`
 
-（4）执行服务器程序
+* 执行服务器程序
 
- 	  `./a.out`
+​          `./a.out`
 
-（5）若（4）中执行可执行文件./a.out 的输出为 LogError：
+* 若上一步的执行可执行文件./a.out 的输出为 LogError：
 
 ​	  请查看`deepin-file-control/test/.log/.x.log`日志文件来检查错误
 
