@@ -14,7 +14,7 @@ UNIXS+="/etc/unix"
 
 g++ -std=c++11 -o ./test/client ./src/cli/*.cpp -lpthread -ldl
 
-cd src/server
+cd src/hook
 `chmod 777 build.sh`
 `./build.sh`
 cd ../..
