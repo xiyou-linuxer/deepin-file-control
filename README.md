@@ -1,83 +1,18 @@
 # xFileContorl产品说明文档
- * 点击此可直接跳转查看 [操作手册](https://mp.csdn.net/mdeditor#_301)
+ * 点击此可直接跳转查看 <a href="#5">五、操作手册</a>
 
-
--  [一、简介](https://mp.csdn.net/mdeditor#_3)
-
-    - - [1.目的](https://mp.csdn.net/mdeditor#1_17)
-      - [2. 范围](https://mp.csdn.net/mdeditor#2__21)
-
--  [二、产品概述](https://mp.csdn.net/mdeditor#_27)
-
-    - - [1. 总体框图](https://mp.csdn.net/mdeditor#1__35)
-
-      - - [1.1 示意图](https://mp.csdn.net/mdeditor#11__37)
-
-        - [1.2 效果](https://mp.csdn.net/mdeditor#12__49)
-
-        - [1.3 流程](https://mp.csdn.net/mdeditor#13__63)
-
-        - - [1.3.1 client](https://mp.csdn.net/mdeditor#131_client_65)
-          - [1.3.2 server](https://mp.csdn.net/mdeditor#132_server_69)
-
-      - [2.功能摘要](https://mp.csdn.net/mdeditor#2_73)
-
-      - - [2.1 客户端](https://mp.csdn.net/mdeditor#21__75)
-        - [2.2 服务端](https://mp.csdn.net/mdeditor#22__85)
--  [三、产品特性](https://mp.csdn.net/mdeditor#_93)
-
-    - - [1. 功能展示](https://mp.csdn.net/mdeditor#1__95)
-
-      - [2. 运行环境](https://mp.csdn.net/mdeditor#2__109)
-
-      - - [2.1 硬件环境](https://mp.csdn.net/mdeditor#21__111)
-
-        - [2.2 软件环境](https://mp.csdn.net/mdeditor#22__117)
-
-        - [运行环境：](https://mp.csdn.net/mdeditor#_119)
-
-        - [开发环境：](https://mp.csdn.net/mdeditor#_123)
-
-        - - [客户端：](https://mp.csdn.net/mdeditor#_125)
-          - [服务端：](https://mp.csdn.net/mdeditor#_131)
-
--  [四、代码框架](https://mp.csdn.net/mdeditor#_139)
-
-    - - [4.1 hook端框架](https://mp.csdn.net/mdeditor#41_hook_141)
-
-      - [4.2 client端框架](https://mp.csdn.net/mdeditor#42_client_157)
-
-      - - [threadpool](https://mp.csdn.net/mdeditor#threadpool_174)
-        - [Monitored_event](https://mp.csdn.net/mdeditor#Monitored_event_187)
-
-      - [4.3 server端框架](https://mp.csdn.net/mdeditor#43_server_204)
-
-      - - [EventLoop](https://mp.csdn.net/mdeditor#EventLoop_216)
-        - [Epoll](https://mp.csdn.net/mdeditor#Epoll_227)
-        - [Channel](https://mp.csdn.net/mdeditor#Channel_240)
-        - [Buffer](https://mp.csdn.net/mdeditor#Buffer_266)
-        - [Socket](https://mp.csdn.net/mdeditor#Socket_280)
-
-      - [4.4 数据展示](https://mp.csdn.net/mdeditor#44__293)
-
-      - - [特性描述](https://mp.csdn.net/mdeditor#_295)
-
-      - [4.5 性能及运行需求](https://mp.csdn.net/mdeditor#45__297)
-
--  [五、操作手册](https://mp.csdn.net/mdeditor#_301)
-
-    - - [1.使用平台](https://mp.csdn.net/mdeditor#1_303)
-      - [2.服务端使用概述](https://mp.csdn.net/mdeditor#2_307)
-      - [3. 客户端使用概述](https://mp.csdn.net/mdeditor#3__331)
-      - [4.使用注意事项](https://mp.csdn.net/mdeditor#4_410)
-
--  [六、问题反馈联系方式](https://mp.csdn.net/mdeditor#_424)
-
--  [七、源代码地址](https://mp.csdn.net/mdeditor#_430)
+* <a href="#1">一、简介 </a>
+* <a href="#2">二、产品概述 </a>
+* <a href="#3">三、产品概述 </a>
+* <a href="#4">四、代码框架 </a>
+* <a href="#5">五、操作手册 </a>
+* <a href="#6">六、问题反馈联系方式</a>
+* <a href="#7">七、源代码地址</a>
 
 
 
-## 一、简介
+## <a name="1">一、简介</a>
+
 
 xFileContorl是一款以MIT协议进行开源的、基于Deepin GNU/Linux下开发，专为Deepin操作系统打造的文件控制器。
 
@@ -103,8 +38,8 @@ xFileContorl客户端工具并不仅仅是监听文件系统事件并上报的�
 此文档主要描述xFileContorl产品的功能点，交互逻辑与细节，主要读者为研发人员。
 
 
+## <a name="2">二、产品概述</a>
 
-## 二、产品概述
 
 ​	本产品面对的用户主要使用文件监视客户端，文件监控的服务端主要由研发人员设置使用。
 
@@ -168,7 +103,8 @@ xFileContorl客户端工具并不仅仅是监听文件系统事件并上报的�
 
 
 
-## 三、产品特性
+## <a name="3">三、产品特性</a>
+
 
 ### 1. 功能展示
 
@@ -215,8 +151,8 @@ xFileContorl客户端工具并不仅仅是监听文件系统事件并上报的�
 ​	    （2）编译版本号：gcc version 7.3.0 (Debian 7.3.0-19)
 
 
+## <a name="4">四、代码框架</a>
 
-## 四、代码框架
 ![](https://img-blog.csdnimg.cn/2019082302144171.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2tra2tkZQ==,size_16,color_FFFFFF,t_70)
 
 
@@ -389,7 +325,7 @@ client框架主要由线程池+事件封装类队列和epoll组成
 
 
 
-## 五、操作手册
+##  <a name="5">五、操作手册</a> 
 
 ### 1. 使用平台
 
@@ -543,14 +479,12 @@ $ ./client
 * 若某进程不需要在监测系统下，可以执行unset LD_PRELOAD命令取消环境变量。若不使用该客户端，可以vi /etc/profile，将当时安装时候的export LD_PRELOAD语句删除。
 
 
-
-## 六、问题反馈联系方式
+## <a name="6">六、问题反馈联系方式</a>
 
 [ghorges@xiyoulinux.org](mailto:ghorges@xiyoulinux.org)
 
 
-
-## 七、源代码地址
+## <a name="7">七、源代码地址</a>
 
 https://github.com/xiyou-linuxer/deepin-file-control
 
