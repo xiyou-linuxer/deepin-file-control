@@ -153,7 +153,7 @@ xFileContorl客户端工具并不仅仅是监听文件系统事件并上报的�
 
 ## <a name="4">四、代码框架</a>
 
-![](https://img-blog.csdnimg.cn/2019082302144171.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2tra2tkZQ==,size_16,color_FFFFFF,t_70)
+![](https://github.com/okokme/project/blob/master/deepin-file/de.png)
 
 
 
