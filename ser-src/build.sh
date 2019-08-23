@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PLATFORM=$(uname -s)
-CXXFLAGS="-std=c++11 -o server"
+CXXFLAGS="-std=c++11 -o ../test/server"
 
 if [ $PLATFORM == "Linux" ]; then
     CXX=g++
