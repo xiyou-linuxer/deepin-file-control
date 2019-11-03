@@ -395,6 +395,7 @@ $ vim file.confc
 - port:				# 端口号
 - addr: 			# 服务器地址
 - path:				# 监测的路径，路径请使用绝对路径 e.g.[/home/linuxer/deepin-file-control/etc]
+
 ```
 
 ​  下面是一份简单的配置样例
