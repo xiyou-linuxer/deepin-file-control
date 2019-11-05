@@ -20,9 +20,4 @@ cd src/hook
 `./build.sh`
 cd ../..
 
-cd ser-src
-`chmod 777 build.sh`
-`./build.sh`
-cd ..
-
 `touch etc/unix`

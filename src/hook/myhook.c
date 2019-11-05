@@ -194,9 +194,9 @@ int open(const char *pathname, int flags, ...)
     /*判断open的参数是两个还是三个参数*/
     int parameter;
     va_list argptr;
-    va_start( argptr, flags );
+    va_start(argptr, 1);
     mode_t mode = va_arg(argptr,mode_t);
-    if (mode >= 0 && mode <= 0777) {
+    if (mode >= 0 && mode <= 00777) {
         parameter = 1;
     }
     va_end( argptr );
@@ -228,7 +228,7 @@ int open(const char *pathname, int flags, ...)
     get_etc();
     int file_path_len = strlen(path);//获取监测目录绝对路径的长度
     int ret = strncmp(path, real_path, file_path_len);
-    if( ret==0 )//属于监测系统监测的目录,需要进行Unix进程通信处理
+    if(ret == 0)//属于监测系统监测的目录,需要进行Unix进程通信处理
     {
         
         /*进程间的通信*/
