@@ -15,14 +15,45 @@
 
    深度操作系统是由中国研发团队主导开发的一款基于Linux的操作系统软件，经过十多年的技术沉淀和版本迭代，产品已日趋完善，并在国内外引起了广泛的关注。深度操作系统目前已支持33种语言，拥有7个海外用户社区，全球用户过百万。  为完善深度操作系统和国产芯片（CPU）下的软件生态，武汉深之度科技有限公司（以下简称深度科技）将于2019年3月举办“深度软件开发大赛”。本次大赛在中国电子工业标准化技术协会信息技术应用创新工作委员会、中国智能终端操作系统联盟的支持和指导下，联合国内优秀的软硬件厂商龙芯中科、华为、成都申威等共同举办，本次大赛也将邀请全国高校及开源组织共同参与。大赛将向全球的开发者征集原创软件作品，丰富国产软件生态。  本次大赛得到了国产芯片厂商的大力支持，并为参赛团队准备了基于龙芯、申威平台的终端硬件开发环境，以开发桌面软件；同时还准备了基于华为鲲鹏处理器的TaiShan服务器硬件开发环境，以便于开发服务端软件。参赛团队可以率先体验和使用国产桌面终端和国产服务器整机，成为国产平台软件开发的先锋。
 
-### 2. 团队介绍
- #### 2.1 成员介绍
+### 2. 题目介绍
+
+#### 2.1 题目
+
+文件管控客户端
+
+#### 2.2 题目要求
+
+在桌面操作系统中开发文件监视工具。监视工具指定的目录下，读取收到严格控制和限制。
+
+具体包括：
+      1.监视和记录制定目录下文件是否被打开（open）和关闭（close）。 
+      2.当这些文件被open和close时，文件监视工具可以作为客户端，向指定的监视服务器的控制模块（称为server）发送一个文件事件信息，文件事件信息的内容包括：文件句柄和操作方式。
+      3.在配置了制定的监视服务器情况下，需等待server对该文件指令，并根据制定执行操作。操作包括：读取，删除，重写等。
+      4.当监视服务器关闭或者网络不通时，client直接拒绝任何操作，不允许任何人打开文件。
+      5.当没有配置指定的监视服务器情况下，根据本地配置默认权限执行操作。
+      有条件的情况下，建议完成监视服务器（server）端的开发工作：
+      1.监视服务器上的控制模块server接收到桌面操作系统客户端上传的文件事件时，如果是文件操作是打开，修改终端系统中该文件内容为“It is a secret”。 
+      2.当server接收到文件关闭的事件时，将文件的原始内容再恢复回去。
+      注意： 桌面操作系统终端上可能有不同的进程同时打开多个收控制的文件； server端也可能同时接收多台终端的客户端程序的请求。 要求使用C/C++代码实现client和server端的程序的上述功能。 
+      
+#### 2.3 基本场景如下
+
+ 1.放置一个文件在终端机上，内容自定。
+ 2.给终端中的文件监视工具配置受控文件路径和监视服务器地址，确保文件监视工具和监视服务器控制模块程序正常运行。
+ 3.编写测试代码open并read文件内容，读出的文件内容为“It is a secret”。
+ 4.编写测试代码close文件。
+ 5.监视工具程序退出。测试代码再次读取该文件，文件内容为原始内容。
+ 6.再次启动监视工具程序，关闭server程序。再次使用测试代码打开文件时失败。
+ 7.打开server程序。测试代码再次open并read文件，读出的文件内容为“It is a secret”。
+
+### 3. 团队介绍
+ #### 3.1 成员介绍
  - 队长：[马艺诚](https://github.com/ghorges)
  - 队员：[胡锦雲](https://github.com/okokme)、[胡佳露](https://github.com/jialuhu)、[朱一琛](https://github.com/yaomer)
- #### 2.2 分工详情
- ##### 2.2.1 客户端
- 客户端主要由成员马艺诚、胡佳露完成。其中基于Ring3的Hook模块与TCP、Unix代码逻辑关系（即各功能模块接口）由成员胡佳露给出。成员马艺诚负责总客户端具体某函数模块的实现以及基于开发环境的功能测试。由于客户端环境的特殊性，以及比赛资源的限制性，客户端代码统一由马艺诚成员GitHub账号上传至GitHub。该客户端的一切开发环境基于主办方为团队提供的主机。
- #### 2.2.2 服务端
+ #### 3.2 分工详情
+ ##### 3.2.1 客户端
+ 客户端主要由成员马艺诚、胡佳露完成。其中基于Ring3的Hook模块与TCP、Unix代码逻辑关系（即各功能模块接口）由成员胡佳露给出。成员马艺诚负责总客户端具体某函数模块的实现以及代码的总汇。由于客户端环境的特殊性，以及比赛资源的限制性，客户端代码统一由马艺诚成员GitHub账号上传至GitHub。该客户端的一切开发环境基于主办方为团队提供的主机。
+ #### 3.2.2 服务端
  服务端主要由成员朱一琛、胡锦雲完成。其中文件备份的压缩加密传输以及解压解密下载代码模块由成员胡锦雲完成并且提供其他成员使用。成员朱一琛负责完成基于高性能和多线程的服务端主要逻辑代码块（网络库）的开发。由于服务端的代码使用了C++11编程以及boost库，对编译器有一定的要求。该服务端部署在拥有gcc version 7.3.0 (Debian 7.3.0-19)的深度操作系统上。
  
  
@@ -354,34 +385,25 @@ client框架主要由线程池+事件封装类队列和epoll组成
 
 ### 2. 服务端使用概述
 
-（1）打开终端，输入以下命令 （**若没有git，请先安装git**）：
+（1）打开终端，输入以下命令(若没有git，请先安装git)：
 
-若没有安装过 git ，执行 `$ sudo apt-get install git` 
+ ```git clone https://github.com/xiyou-linuxer/deepin-file-control.git```
 
-```
-$ git clone https://github.com/xiyou-linuxer/deepin-file-control.git
-```
+（2）打开目录 deepin-file-control,执行以下命令:
 
-（2）打开目录 /deepin-file-control/src/server:
+ ```cd deep-file-control```
 
-```
-$ cd deep-file-control/src/server
-```
+（3）打开文件 deepin-file-control/etc/file.conf，执行以下命令：
+  ```sudo vim etc/file.conf```
+  修改被监控文件所在绝对路径，保存退出
 
-（3）执行脚本文件 build.sh
+（4）回到deepin-file-control主目录，执行脚本文件 deepin-file-control/make.sh，执行以下命令：
+  ```./make.sh```
+  执行该脚本文件，生成可执行文件和.so文件
 
-```
-$ ./build.sh
-```
-
-（4）执行服务器程序
-
-```
-$ ./a.out
-```
-
-（5）若上一步的执行可执行文件`./a.out `的输出为 LogError：
-
+（5）执行服务端可执行文件，回到目录deepin-file-control/ser-src，执行以下命令：
+ ```sudo ./server```
+ 
 请查看`deepin-file-control/test/.log/.x.log`日志文件来勘察错误
 
 
@@ -390,100 +412,34 @@ $ ./a.out
 
 （1）打开终端，输入以下命令(若没有git，请先安装git)：
 
-```
-$ git clone https://github.com/xiyou-linuxer/deepin-file-control.git
-```
+ ```git clone https://github.com/xiyou-linuxer/deepin-file-control.git```
 
-（2）打开目录 /deepin-file-control:
+（2）打开目录 deepin-file-control,执行以下命令:
 
-```
-$ cd deep-file-control
-```
+ ```cd deep-file-control```
+（3）打开文件 deepin-file-control/etc/file.conf，执行以下命令：
+  ```vim etc/file.conf```
+  修改被监控文件所在绝对路径，保存退出
 
-（3）在 `/deepin-file-control` 目录下通过指定配置文件 `/etc/file.conf`进行配置：
+（4）执行脚本文件 deepin-file-control/make.sh，执行以下命令：
+  ```cd ../ ```
+  回到deepin-file-control主目录
+  ```./make.sh```
+  执行该脚本文件，生成可执行文件和.so文件
 
-```c
-$ cd /etc
-$ vim file.confc
+（5）修改加载库的顺序，执行以下命令：
+ ```vim /etc/ld.so.preload```
 
-在 file.conf 填写配置文件
-- port:				# 端口号
-- addr: 			# 服务器地址
-- path:				# 监测的路径，路径请使用绝对路径 e.g.[/home/linuxer/deepin-file-control/etc]
+（6）在/etc/ld.so.preload加入.so文件绝对路径,绝对路径例如下：
+ ```/此处为deepin-file-control下载所在目录/deepin-file-control/test/myhook.so```
+ 根据自己下载deepin-file-control的路径，组成.so文件的绝对路径。
 
-```
+（7）此时可以回到deepin-file-control主目录，执行客户端的可执行文件，执行如下命令：
+ ```cd deepin-file-control/src/cli```
+ ```sudo ./client```
 
-​  下面是一份简单的配置样例
-
-```
-port:8888
-addr:127.0.0.1
-path:/home/username/deepin-file-control/etc
-```
-
-注：服务器地址可以根据自身放置服务器的ip地址而改变 
-
-​        username根据自身用户名来填写 
-
-（4）回到 `/deepin-file-control`：
-
-```
-$ cd ..
-```
-
-（5）执行脚本文件
-
-```
-$ chmod 777 make.sh
-$ ./make.sh
-```
-
-（6）在 /deepin-file-control 下进入 /test ，查看当前目录的绝对路径，并复制该绝对路径
-
-```
-$ cd ./test
-$ pwd
-
-复制输出后的结果 
-参考格式样例： /home/username/deep-file-control/test （username 根据实际用户替换）
-```
-
-（7）打开指定系统配置文件 /etc/profile 
-
-```
-$ su root
-$ vim /etc/profile
-```
-
-（8）对指定配置文件 /etc/profile 进行配置
-
-```
-填写：
-export LD_PRELOAD=此处是(6)中复制的绝对路径/myhook.so
-```
-
-下面是一份配置样例：
-
-```
-export LD_PRELOAD=/home/username/deep-file-control/test/myhook.so
-```
-
-（9）执行 /etc/profile 的脚本命令
-
-```
-$ source /etc/profile
-```
-
-（10）返回 /deep-file-control 下的 /test，启动客户端
-
-```
-$ cd ..
-$ cd /test
-$ ./client
-```
-
-（11）若 上一步提示启动成功，则客户端开启成功
-
+PS:要解除该监测功能，需要先把.so文件删除，再切换至root用户执行如下命令:
+```echo "" > /etc/ld.so.preload```
 
 
 ### 4.使用注意事项
