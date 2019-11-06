@@ -417,28 +417,40 @@ client框架主要由线程池+事件封装类队列和epoll组成
 （2）打开目录 deepin-file-control,执行以下命令:
 
  ```cd deep-file-control```
+ 
 （3）打开文件 deepin-file-control/etc/file.conf，执行以下命令：
+
   ```vim etc/file.conf```
+  
   修改被监控文件所在绝对路径，保存退出
 
 （4）执行脚本文件 deepin-file-control/make.sh，执行以下命令：
+
   ```cd ../ ```
+  
   回到deepin-file-control主目录
+  
   ```./make.sh```
+  
   执行该脚本文件，生成可执行文件和.so文件
 
 （5）修改加载库的顺序，执行以下命令：
+
  ```vim /etc/ld.so.preload```
 
 （6）在/etc/ld.so.preload加入.so文件绝对路径,绝对路径例如下：
+
  ```/此处为deepin-file-control下载所在目录/deepin-file-control/test/myhook.so```
+ 
  根据自己下载deepin-file-control的路径，组成.so文件的绝对路径。
 
 （7）此时可以回到deepin-file-control主目录，执行客户端的可执行文件，执行如下命令：
+
  ```cd deepin-file-control/src/cli```
  ```sudo ./client```
 
 PS:要解除该监测功能，需要先把.so文件删除，再切换至root用户执行如下命令:
+
 ```echo "" > /etc/ld.so.preload```
 
 
