@@ -116,7 +116,6 @@ enum MONITOR_STATE Unix_Socket(enum TYPE_HOOK types, char *pathname)
     }
     old_close(conn_socket);
     return monitor_state;
-    //return OPEN_SAVE_OK;
 }
 
 //获取配置文件路径
@@ -173,7 +172,7 @@ void get_etc()
     int t = old_close(fd);
     if(t < 0)
     {
-        perror("close t err:");
+        perror("old_close is errno:");
         exit(0);
     }
 }
