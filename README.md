@@ -394,14 +394,19 @@ client框架主要由线程池+事件封装类队列和epoll组成
  ```cd deep-file-control```
 
 （3）打开文件 deepin-file-control/etc/file.conf，执行以下命令：
+
   ```sudo vim etc/file.conf```
+  
   修改被监控文件所在绝对路径，保存退出
 
 （4）回到deepin-file-control主目录，执行脚本文件 deepin-file-control/make.sh，执行以下命令：
+
   ```./make.sh```
+  
   执行该脚本文件，生成可执行文件和.so文件
 
 （5）执行服务端可执行文件，回到目录deepin-file-control/ser-src，执行以下命令：
+
  ```sudo ./server```
  
 请查看`deepin-file-control/test/.log/.x.log`日志文件来勘察错误
@@ -447,6 +452,7 @@ client框架主要由线程池+事件封装类队列和epoll组成
 （7）此时可以回到deepin-file-control主目录，执行客户端的可执行文件，执行如下命令：
 
  ```cd deepin-file-control/src/cli```
+ 
  ```sudo ./client```
 
 PS:要解除该监测功能，需要先把.so文件删除，再切换至root用户执行如下命令:
