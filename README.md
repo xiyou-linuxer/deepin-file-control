@@ -1,8 +1,11 @@
 [产品说明文档](https://github.com/xiyou-linuxer/deepin-file-control#xfilecontorl%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E%E6%96%87%E6%A1%A3)
-关于我们：
+
+## 关于我们：
 ![aboutUs](https://github.com/xiyou-linuxer/deepin-file-control/blob/master/about_us.jpg)
-获奖情况：
+
+## 获奖情况：
 ![award](https://github.com/xiyou-linuxer/deepin-file-control/blob/master/award.jpg)
+
 # xFileContorl产品说明文档
 
 * <a href="#1">一、背景 </a>
